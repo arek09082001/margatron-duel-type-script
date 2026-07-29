@@ -2,7 +2,8 @@
 
 Przeglądarkowy RPG-duel inspirowany klasycznym frontendowym prototypem.
 Ta wersja jest przepisana na **Next.js (App Router), React i TypeScript**,
-ze stanem gry w **Zustandzie** — bez backendu, gotowa do wrzucenia na Vercela.
+ze stanem gry w **Postgresie (Supabase) przez Prismę** — logujesz się nickiem
+albo emailem i grasz dalej z dowolnego urządzenia.
 
 <p align="center">
   <img src="docs/screenshots/home.jpg" alt="Ekran rejestracji i logowania" width="820">
@@ -15,9 +16,13 @@ ze stanem gry w **Zustandzie** — bez backendu, gotowa do wrzucenia na Vercela.
 ## Stack
 
 - Next.js 15 (App Router), React 19, TypeScript
-- Zustand + `persist` (localStorage) jako warstwa zapisu
-- Cała logika gry po stronie klienta, w czystym TypeScripcie
-- Deploy na Vercelu, bez bazy danych i bez kolejek
+- Postgres (Supabase) + Prisma 7 — zapis stanu gry
+- Własne logowanie: nick albo email + hasło, cookie sesji podpisane HMAC
+- Zustand jako cache do renderowania
+- Deploy na Vercelu
+
+Logika gry wykonuje się **po stronie serwera**: klient wysyła intencję akcji,
+nie gotowy stan.
 
 Poprzednia wersja stała na Laravelu, MySQL, Redisie, Horizonie i Reverbie.
 Wszystko to zostało zastąpione: patrz [Co się zmieniło](#co-się-zmieniło).
@@ -26,12 +31,13 @@ Wszystko to zostało zastąpione: patrz [Co się zmieniło](#co-się-zmieniło).
 
 ```bash
 npm install
+cp .env.example .env     # uzupełnij DATABASE_URL, DIRECT_URL, AUTH_SECRET
+npm run db:migrate       # tworzy tabele
+npm run db:seed          # opcjonalnie: postacie z wersji lokalnej
 npm run dev
 ```
 
-Gra jest pod `http://localhost:3000`. Nie trzeba nic konfigurować — plik
-`.env` jest opcjonalny (zobacz `.env.example`, jeśli chcesz zmienić tempo
-regeneracji PA albo ceny odpoczynku).
+Gra jest pod `http://localhost:3000`.
 
 ## Deploy na Vercela
 
@@ -42,8 +48,18 @@ Repo jest standardowym projektem Next.js, więc Vercel wykrywa wszystko sam:
 3. Build command i output zostaw domyślne.
 4. Deploy.
 
-Zmienne środowiskowe nie są wymagane. Jeśli chcesz przestawić balans gry,
-dodaj wybrane `NEXT_PUBLIC_*` z `.env.example` w ustawieniach projektu.
+Wymagane zmienne środowiskowe (Settings → Environment Variables):
+
+| Zmienna | Skąd |
+| --- | --- |
+| `DATABASE_URL` | Supabase → Connect → Transaction pooler (6543), z `?pgbouncer=true` |
+| `DIRECT_URL` | Supabase → Connect → Direct connection (5432) |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+
+Bazę wystarczy raz przygotować: wklej `supabase-setup.sql` do Supabase →
+SQL Editor. Szczegóły w [`docs/SUPABASE.md`](docs/SUPABASE.md).
+
+Opcjonalnie możesz przestawić balans gry przez `NEXT_PUBLIC_*` z `.env.example`.
 
 ## Skrypty
 
@@ -53,6 +69,8 @@ npm run build       # produkcyjny build
 npm run start       # serwer produkcyjny
 npm run type-check  # tsc --noEmit
 npm run lint        # eslint
+npm run db:migrate  # prisma migrate deploy
+npm run db:seed     # prisma db seed
 ```
 
 ## Struktura
@@ -69,15 +87,16 @@ src/
 │   ├── state.ts        snapshot dla UI, mapa świata, sklep z PA
 │   ├── achievements.ts osiągnięcia
 │   └── ranking.ts      ranking po poziomie
-├── store/        Zustand: akcje gracza, zapis, selektory, zegar gry
+├── server/       Prisma, sesje, hasła, wykonanie akcji po stronie serwera
+├── store/        Zustand: cache profilu i wywołania API
 ├── components/   komponenty React (te same klasy CSS co w wersji Vue)
 ├── styles/       `legacy-*.css` — warstwa wizualna starego frontendu
 └── app/          trasy: `/`, `/game`, `/rankings`, `/achievements`
 ```
 
 Podział jest celowy: `src/game/**` nie wie nic o Reakcie ani o tym, gdzie
-trzymany jest stan. Dzięki temu ta sama logika może później pojechać na serwer
-(Server Actions albo Supabase Edge Functions) bez przepisywania.
+trzymany jest stan. Dzięki temu dokładnie ten sam kod, który wcześniej liczył
+walki w przeglądarce, wykonuje się teraz na serwerze — bez przepisywania.
 
 ## Punkty akcji i odpoczynek
 
@@ -95,29 +114,32 @@ do karty.
 
 ## Konta i zapis
 
-Konta są **lokalne**. Rejestracja tworzy postać w `localStorage` tej
-przeglądarki (hasło jest solone i hashowane SHA-256, ale to tylko prosta
-bramka — bez serwera nie ma czego uwierzytelniać). W jednej przeglądarce może
-istnieć wiele postaci.
+Logujesz się **nickiem albo emailem** + hasłem. Stan gry siedzi w Postgresie,
+więc ta sama postać jest dostępna z każdego urządzenia. Ranking jest globalny.
 
-Z tego wynika też ranking: obejmuje postacie z tej przeglądarki, nie graczy z
-całego świata. Globalna tabela przyjdzie razem z Supabase.
+Hasła są hashowane scryptem (`node:crypto`, bez zależności natywnych). Postacie
+przeniesione z wersji lokalnej zachowują swoje stare hasło — ich hash w formacie
+`sha256$...` jest nadal akceptowany i po pierwszym logowaniu po cichu
+przepisywany na scrypt.
 
-## Supabase
+Kto grał wcześniej lokalnie, przy pierwszym wczytaniu gry ma swoją postać
+automatycznie przeniesioną z `localStorage` do bazy.
 
-Plan przejścia na Supabase — wraz z gotowym schematem SQL, politykami RLS i
-listą kroków — jest w [`docs/SUPABASE.md`](docs/SUPABASE.md).
+## Baza danych
+
+Schemat, zmienne środowiskowe i szczegóły migracji:
+[`docs/SUPABASE.md`](docs/SUPABASE.md).
 
 ## Co się zmieniło
 
 | Wcześniej (Laravel) | Teraz (Next.js) |
 | --- | --- |
 | Kontrolery + Inertia | Trasy App Routera, akcje w storze |
-| Eloquent + MySQL | `GameProfile` w Zustandzie (localStorage) |
+| Eloquent + MySQL | Prisma + Postgres (Supabase) |
 | Serwisy w `app/Game/Services` | Moduły w `src/game/**` (port 1:1) |
 | Joby kolejki (PA, odpoczynek) | Przeliczanie ze znaczników czasu |
 | Reverb + Echo (websocket) | Interwał w `useGameClock()` |
-| Sesje Laravela | Lokalne konta w `localStorage` |
+| Sesje Laravela | Własne cookie sesji podpisane HMAC |
 | Komponenty Vue 3 | Komponenty React (te same klasy CSS) |
 | Docker Compose, Horizon, deploy przez GH Actions | Deploy na Vercelu |
 

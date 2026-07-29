@@ -1,215 +1,244 @@
 'use client';
 
 /**
- * The single client-side game store.
+ * Client-side game store.
  *
- * It plays the role the Laravel controllers used to: take a player action, run
- * it against the domain layer inside a transaction-like draft, and persist the
- * result. Swap `persist` for a Supabase-backed implementation and the
- * components keep working unchanged.
+ * Since Supabase landed, the server owns the game state: every action is sent
+ * as an intent to `/api/game/action`, applied there against the pure domain
+ * layer, persisted through Prisma, and the resulting profile comes back.
+ *
+ * The profile kept here is a render cache. It is ticked locally so action
+ * points count up smoothly between actions — `settleProfile` is deterministic
+ * from timestamps, so the client and the server always agree.
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
-import { fightArena, fightStage, fightToughEnemy } from '@/game/battle';
 import { GameError } from '@/game/errors';
-import { buyItem, consumeItem, equip, sell, sellAll, unequip } from '@/game/inventory';
-import * as profileService from '@/game/profile';
-import { instantRest, startRest } from '@/game/rest';
-import { buyPa, selectMap, settleProfile } from '@/game/state';
+import { settleProfile } from '@/game/state';
 import type {
     ArenaDifficultyValue,
     BattleResult,
     EquipmentSlot,
     GameProfile,
     PlayerAttributeKey,
+    PlayerRanking,
     ToughEnemyKind,
 } from '@/game/types';
-import { createAccountId, createSalt, hashPassword, type Account } from './persistence';
+import { readLegacyLocalProfile, clearLegacyLocalProfile } from './legacyLocalSave';
 
-export const STORAGE_KEY = 'mgduel:v1';
+type GameAction =
+    | { type: 'addAttribute'; attribute: PlayerAttributeKey }
+    | { type: 'selectMap'; mapId: number }
+    | { type: 'rest'; minutes: number }
+    | { type: 'instantRest' }
+    | { type: 'buyPa'; amount: number }
+    | { type: 'buyItem'; shopId: string; itemId: string | number }
+    | { type: 'equipItem'; index: number }
+    | { type: 'unequipItem'; slot: EquipmentSlot }
+    | { type: 'sellItem'; index: number }
+    | { type: 'sellAllItems' }
+    | { type: 'usePotion'; index: number }
+    | { type: 'fightStage'; locationId: string; stage: number }
+    | { type: 'fightArena'; difficulty: ArenaDifficultyValue }
+    | { type: 'fightTough'; locationId: string; enemyType: ToughEnemyKind };
 
-type PersistedState = {
-    accounts: Account[];
-    profiles: Record<string, GameProfile>;
-    currentAccountId: string | null;
-};
-
-type GameStore = PersistedState & {
-    hydrated: boolean;
-    setHydrated: (hydrated: boolean) => void;
+type GameStore = {
+    profile: GameProfile | null;
+    ranking: PlayerRanking | null;
+    /** False until the first `/api/game` load settles, so screens can wait. */
+    loaded: boolean;
+    /** True while an action is in flight — used to stop double-clicks. */
+    busy: boolean;
 
     register: (nick: string, email: string, password: string) => Promise<void>;
-    login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
+    /** `identifier` is a nick or an email — both work. */
+    login: (identifier: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+    load: () => Promise<void>;
 
-    /** Brings the active profile up to date with the wall clock. */
     tick: () => void;
 
-    addAttribute: (attribute: PlayerAttributeKey) => void;
-    selectMap: (mapId: number) => void;
-    rest: (minutes: number) => void;
-    instantRest: () => void;
-    buyPa: (amount: number) => void;
-    buyItem: (shopId: string, itemId: string | number) => void;
-    equipItem: (index: number) => void;
-    unequipItem: (slot: EquipmentSlot) => void;
-    sellItem: (index: number) => void;
-    sellAllItems: () => { gold: number; count: number };
-    usePotion: (index: number) => void;
+    addAttribute: (attribute: PlayerAttributeKey) => Promise<void>;
+    selectMap: (mapId: number) => Promise<void>;
+    rest: (minutes: number) => Promise<void>;
+    instantRest: () => Promise<void>;
+    buyPa: (amount: number) => Promise<void>;
+    buyItem: (shopId: string, itemId: string | number) => Promise<void>;
+    equipItem: (index: number) => Promise<void>;
+    unequipItem: (slot: EquipmentSlot) => Promise<void>;
+    sellItem: (index: number) => Promise<void>;
+    sellAllItems: () => Promise<void>;
+    usePotion: (index: number) => Promise<void>;
 
-    fightStage: (locationId: string, stage: number) => BattleResult;
-    fightArena: (difficulty: ArenaDifficultyValue) => BattleResult;
-    fightTough: (locationId: string, enemyType: ToughEnemyKind) => BattleResult;
+    fightStage: (locationId: string, stage: number) => Promise<BattleResult>;
+    fightArena: (difficulty: ArenaDifficultyValue) => Promise<BattleResult>;
+    fightTough: (locationId: string, enemyType: ToughEnemyKind) => Promise<BattleResult>;
 };
 
-function normalizeEmail(email: string): string {
-    return email.trim().toLowerCase();
+/** Turns a non-2xx API response into the `GameError` the UI already handles. */
+async function failure(response: Response): Promise<GameError> {
+    let message = 'Akcja nie powiodła się.';
+
+    try {
+        const body = (await response.json()) as { message?: string };
+        message = body.message ?? message;
+    } catch {
+        // Non-JSON body (a proxy error page, say) — keep the generic message.
+    }
+
+    return new GameError(message);
 }
 
-export const useGameStore = create<GameStore>()(
-    persist(
-        (set, get) => {
-            /**
-             * Runs `mutator` against a throwaway clone of the active profile.
-             *
-             * If it throws — a `GameError` such as "not enough gold" — the clone
-             * is discarded and nothing is persisted, which gives the same
-             * all-or-nothing behaviour as the old `DB::transaction` wrapper.
-             */
-            function mutate<T>(mutator: (profile: GameProfile, now: number) => T): T {
-                const { currentAccountId, profiles } = get();
-                const current = currentAccountId ? profiles[currentAccountId] : null;
+export const useGameStore = create<GameStore>()((set, get) => {
+    async function dispatch(action: GameAction): Promise<BattleResult | undefined> {
+        set({ busy: true });
 
-                if (!current) {
-                    throw new GameError('Brak aktywnej postaci.');
-                }
+        try {
+            const response = await fetch('/api/game/action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(action),
+            });
 
-                const draft = structuredClone(current);
-                const now = Date.now();
-
-                settleProfile(draft, now);
-                const result = mutator(draft, now);
-                profileService.recalculate(draft);
-
-                set({ profiles: { ...get().profiles, [draft.id]: draft } });
-
-                return result;
+            if (!response.ok) {
+                throw await failure(response);
             }
 
-            return {
-                accounts: [],
-                profiles: {},
-                currentAccountId: null,
-                hydrated: false,
-
-                setHydrated: (hydrated) => set({ hydrated }),
-
-                register: async (nick, email, password) => {
-                    const normalizedEmail = normalizeEmail(email);
-                    const { accounts, profiles } = get();
-
-                    if (accounts.some((account) => account.email === normalizedEmail)) {
-                        throw new GameError('Konto z tym adresem email już istnieje.');
-                    }
-
-                    if (accounts.some((account) => account.nick.toLowerCase() === nick.toLowerCase())) {
-                        throw new GameError('Ten nick jest już zajęty.');
-                    }
-
-                    const id = createAccountId();
-                    const salt = createSalt();
-                    const account: Account = {
-                        id,
-                        nick,
-                        email: normalizedEmail,
-                        salt,
-                        passwordHash: await hashPassword(password, salt),
-                        createdAt: Date.now(),
-                    };
-
-                    set({
-                        accounts: [...accounts, account],
-                        profiles: { ...profiles, [id]: profileService.createProfile(id, nick) },
-                        currentAccountId: id,
-                    });
-                },
-
-                login: async (email, password) => {
-                    const normalizedEmail = normalizeEmail(email);
-                    const { accounts, profiles } = get();
-                    const account = accounts.find((candidate) => candidate.email === normalizedEmail);
-
-                    if (!account) {
-                        throw new GameError('Nieprawidłowy email lub hasło.');
-                    }
-
-                    const passwordHash = await hashPassword(password, account.salt);
-
-                    if (passwordHash !== account.passwordHash) {
-                        throw new GameError('Nieprawidłowy email lub hasło.');
-                    }
-
-                    // Self-heal: a profile can go missing if storage was cleared
-                    // partially, so recreate it rather than dead-ending the login.
-                    const profile = profiles[account.id] ?? profileService.createProfile(account.id, account.nick);
-
-                    set({
-                        currentAccountId: account.id,
-                        profiles: { ...profiles, [account.id]: profile },
-                    });
-                },
-
-                logout: () => set({ currentAccountId: null }),
-
-                tick: () => {
-                    const { currentAccountId, profiles } = get();
-                    const current = currentAccountId ? profiles[currentAccountId] : null;
-
-                    if (!current) {
-                        return;
-                    }
-
-                    const draft = structuredClone(current);
-
-                    if (!settleProfile(draft, Date.now())) {
-                        return;
-                    }
-
-                    set({ profiles: { ...profiles, [draft.id]: draft } });
-                },
-
-                addAttribute: (attribute) => mutate((profile) => profileService.addAttribute(profile, attribute)),
-                selectMap: (mapId) => mutate((profile) => selectMap(profile, mapId)),
-                rest: (minutes) => mutate((profile, now) => startRest(profile, minutes, now)),
-                instantRest: () => mutate((profile, now) => instantRest(profile, now)),
-                buyPa: (amount) => mutate((profile, now) => buyPa(profile, amount, now)),
-                buyItem: (shopId, itemId) => mutate((profile) => buyItem(profile, shopId, itemId)),
-                equipItem: (index) => mutate((profile) => equip(profile, index)),
-                unequipItem: (slot) => mutate((profile) => unequip(profile, slot)),
-                sellItem: (index) => mutate((profile) => sell(profile, index)),
-                sellAllItems: () => mutate((profile) => sellAll(profile)),
-                usePotion: (index) => mutate((profile, now) => consumeItem(profile, index, now)),
-
-                fightStage: (locationId, stage) =>
-                    mutate((profile, now) => fightStage(profile, locationId, stage, now)),
-                fightArena: (difficulty) => mutate((profile, now) => fightArena(profile, difficulty, now)),
-                fightTough: (locationId, enemyType) =>
-                    mutate((profile, now) => fightToughEnemy(profile, locationId, enemyType, now)),
+            const { profile, battle } = (await response.json()) as {
+                profile: GameProfile;
+                battle?: BattleResult;
             };
+
+            set({ profile });
+
+            return battle;
+        } finally {
+            set({ busy: false });
+        }
+    }
+
+    async function battleAction(action: GameAction): Promise<BattleResult> {
+        const battle = await dispatch(action);
+
+        if (!battle) {
+            throw new GameError('Walka nie zwróciła wyniku.');
+        }
+
+        return battle;
+    }
+
+    return {
+        profile: null,
+        ranking: null,
+        loaded: false,
+        busy: false,
+
+        register: async (nick, email, password) => {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nick, email, password }),
+            });
+
+            if (!response.ok) {
+                throw await failure(response);
+            }
         },
-        {
-            name: STORAGE_KEY,
-            version: 1,
-            partialize: (state): PersistedState => ({
-                accounts: state.accounts,
-                profiles: state.profiles,
-                currentAccountId: state.currentAccountId,
-            }),
-            onRehydrateStorage: () => (state) => {
-                state?.setHydrated(true);
-            },
+
+        login: async (identifier, password) => {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, password }),
+            });
+
+            if (!response.ok) {
+                throw await failure(response);
+            }
         },
-    ),
-);
+
+        logout: async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+
+            set({ profile: null, ranking: null, loaded: false });
+        },
+
+        load: async () => {
+            // A character played before Supabase still lives in localStorage.
+            // Offer it once; the server only accepts it for an empty account.
+            const legacy = readLegacyLocalProfile();
+
+            if (legacy) {
+                try {
+                    const response = await fetch('/api/game/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(legacy),
+                    });
+
+                    // 409 means this account already has progress — expected on
+                    // every device after the first, and not an error.
+                    if (response.ok || response.status === 409) {
+                        clearLegacyLocalProfile();
+                    }
+                } catch {
+                    // Offline or a transient failure: keep the local save and
+                    // retry on the next load rather than losing the character.
+                }
+            }
+
+            const response = await fetch('/api/game');
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    set({ profile: null, ranking: null, loaded: true });
+
+                    return;
+                }
+
+                throw await failure(response);
+            }
+
+            const { profile, ranking } = (await response.json()) as {
+                profile: GameProfile;
+                ranking: PlayerRanking;
+            };
+
+            set({ profile, ranking, loaded: true });
+        },
+
+        tick: () => {
+            const current = get().profile;
+
+            if (!current) {
+                return;
+            }
+
+            const draft = structuredClone(current);
+
+            if (!settleProfile(draft, Date.now())) {
+                return;
+            }
+
+            set({ profile: draft });
+        },
+
+        addAttribute: async (attribute) => void (await dispatch({ type: 'addAttribute', attribute })),
+        selectMap: async (mapId) => void (await dispatch({ type: 'selectMap', mapId })),
+        rest: async (minutes) => void (await dispatch({ type: 'rest', minutes })),
+        instantRest: async () => void (await dispatch({ type: 'instantRest' })),
+        buyPa: async (amount) => void (await dispatch({ type: 'buyPa', amount })),
+        buyItem: async (shopId, itemId) => void (await dispatch({ type: 'buyItem', shopId, itemId })),
+        equipItem: async (index) => void (await dispatch({ type: 'equipItem', index })),
+        unequipItem: async (slot) => void (await dispatch({ type: 'unequipItem', slot })),
+        sellItem: async (index) => void (await dispatch({ type: 'sellItem', index })),
+        sellAllItems: async () => void (await dispatch({ type: 'sellAllItems' })),
+        usePotion: async (index) => void (await dispatch({ type: 'usePotion', index })),
+
+        fightStage: (locationId, stage) => battleAction({ type: 'fightStage', locationId, stage }),
+        fightArena: (difficulty) => battleAction({ type: 'fightArena', difficulty }),
+        fightTough: (locationId, enemyType) =>
+            battleAction({ type: 'fightTough', locationId, enemyType }),
+    };
+});

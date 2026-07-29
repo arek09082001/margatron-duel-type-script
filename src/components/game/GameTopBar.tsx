@@ -14,8 +14,8 @@ export default function GameTopBar({ active = 'game', onSettings }: GameTopBarPr
     const router = useRouter();
     const logout = useGameStore((state) => state.logout);
 
-    function handleLogout(): void {
-        logout();
+    async function handleLogout(): Promise<void> {
+        await logout();
         router.push('/');
     }
 
@@ -46,7 +46,7 @@ export default function GameTopBar({ active = 'game', onSettings }: GameTopBarPr
                 <button className="nav-btn" type="button" onClick={onSettings}>
                     KONFIGURACJA
                 </button>
-                <button className="nav-btn logout" type="button" onClick={handleLogout}>
+                <button className="nav-btn logout" type="button" onClick={() => void handleLogout()}>
                     WYLOGUJ
                 </button>
             </nav>

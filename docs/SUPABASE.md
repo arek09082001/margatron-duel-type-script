@@ -1,119 +1,83 @@
-# Przejście na Supabase
+# Supabase + Prisma
 
-Gra działa dziś w całości w przeglądarce: stan siedzi w Zustandzie i jest
-zapisywany do `localStorage`. Ten dokument opisuje, co trzeba zrobić, żeby
-przełączyć się na Supabase — i dlaczego kod jest już pod to przygotowany.
+Gra trzyma stan w Postgresie hostowanym przez Supabase. Prisma jest źródłem
+prawdy dla schematu i warstwą dostępu po stronie serwera. Supabase Auth **nie
+jest używane** — logowanie jest własne (nick albo email + hasło).
 
-## Dlaczego to będzie proste
+## Co gdzie żyje
 
-Logika gry w `src/game/**` jest czystym TypeScriptem. Nie importuje Reacta, nie
-zna Zustanda, nie dotyka `window`. Każda funkcja przyjmuje `GameProfile`,
-mutuje go i ewentualnie rzuca `GameError`. Dokładnie ten sam kod może się
-wykonać w Server Action albo w Edge Function.
+| Warstwa | Gdzie |
+| --- | --- |
+| Logika gry (czysty TS) | `src/game/**` |
+| Akcje gracza po stronie serwera | `src/server/profileService.ts` |
+| Logowanie, hasła, cookie sesji | `src/server/auth.ts`, `src/server/session.ts` |
+| Schemat bazy | `prisma/schema.prisma` |
+| API | `src/app/api/**` |
+| Klient (cache do renderowania) | `src/store/gameStore.ts` |
 
-Jedyne miejsce, które wie o storage, to `src/store/`:
+Klient wysyła **intencję** (`{ type: 'fightStage', ... }`), nigdy gotowego
+stanu. Serwer wczytuje profil, uruchamia tę samą funkcję z `src/game/**`,
+zapisuje wynik i odsyła nowy profil. Dzięki temu podmiana `localStorage` nie
+daje już nikomu 10 000 złota.
 
-- `persistence.ts` — typy `Account` / `GameBackend` i lokalne hashowanie hasła
-- `gameStore.ts` — akcje gracza (`mutate()` klonuje profil, uruchamia logikę, zapisuje)
-- `hooks.ts` — selektory i zegar gry
+## Zmienne środowiskowe
 
-## Schemat bazy
+Ustaw je w Vercelu (Settings → Environment Variables) dla **Production**,
+**Preview** i **Development**.
 
-`GameProfile` jest płaskim obiektem JSON, więc mapuje się 1:1 na wiersz.
-Pola JSON (`inventory`, `equipped`, `stage_progress`, `rest_tasks`) zostają
-jako `jsonb`.
+| Zmienna | Skąd wziąć | Do czego |
+| --- | --- | --- |
+| `DATABASE_URL` | Supabase → Connect → **Transaction pooler** (port 6543) | połączenia w runtime |
+| `DIRECT_URL` | Supabase → Connect → **Direct connection** (port 5432) | migracje |
+| `AUTH_SECRET` | wygeneruj: `openssl rand -base64 32` | podpisywanie cookie sesji |
 
-```sql
-create table public.game_profiles (
-    id uuid primary key references auth.users (id) on delete cascade,
-    nick text not null unique,
+Do `DATABASE_URL` dopisz `?pgbouncer=true`, np.:
 
-    level smallint not null default 1,
-    exp integer not null default 0,
-    exp_max integer not null default 20,
-    gold integer not null default 100,
-
-    pa smallint not null default 20,
-    pa_max smallint not null default 20,
-    pa_regenerated_at timestamptz not null default now(),
-
-    played_seconds integer not null default 0,
-    last_seen_at timestamptz not null default now(),
-
-    vitality smallint not null default 5,
-    strength smallint not null default 5,
-    luck smallint not null default 5,
-    vitality_points_assigned smallint not null default 0,
-    strength_points_assigned smallint not null default 0,
-    luck_points_assigned smallint not null default 0,
-    attribute_points smallint not null default 0,
-
-    hp integer not null default 50,
-    dmg_min smallint not null default 1,
-    dmg_max smallint not null default 2,
-    armor smallint not null default 0,
-    crit_chance numeric(5, 2) not null default 5,
-    crit_power numeric(6, 2) not null default 150,
-    dodge numeric(5, 2) not null default 3,
-    stun numeric(5, 2) not null default 0,
-
-    monsters_killed integer not null default 0,
-    unique_items_found integer not null default 0,
-    heroic_items_found integer not null default 0,
-    legendary_items_found integer not null default 0,
-
-    current_map_id smallint not null default 1,
-    rest_tasks jsonb not null default '{}'::jsonb,
-    stage_progress jsonb not null default '{}'::jsonb,
-    inventory jsonb not null default '[]'::jsonb,
-    equipped jsonb not null default '{"weapon":null,"armor":null,"accessory":null}'::jsonb,
-
-    updated_at timestamptz not null default now()
-);
-
-alter table public.game_profiles enable row level security;
-
--- Gracz czyta i zapisuje wyłącznie własny profil.
-create policy "own profile read" on public.game_profiles
-    for select using (auth.uid() = id);
-
-create policy "own profile write" on public.game_profiles
-    for update using (auth.uid() = id) with check (auth.uid() = id);
-
--- Ranking musi widzieć cudze nicki i poziomy — osobny, wąski widok.
-create view public.player_rankings as
-    select id, nick, level, exp from public.game_profiles;
-
-grant select on public.player_rankings to authenticated;
+```
+postgresql://postgres.<ref>:<hasło>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true
 ```
 
-Kolumny są `snake_case`, a typ TS jest `camelCase`. Potrzebny jest więc mapper
-(`toRow` / `fromRow`) — najlepiej obok `persistence.ts`.
+Hasło do bazy musi być zakodowane URL-em, jeśli zawiera znaki specjalne
+(`!` → `%21`, `@` → `%40`).
 
-## Kroki migracji
+Klucze `anon` i `service_role` **nie są potrzebne** — nie używamy Supabase
+Auth ani PostgREST. Przeglądarka nigdy nie łączy się z bazą bezpośrednio.
 
-1. **Auth.** Podmień `register` / `login` w `gameStore.ts` na
-   `supabase.auth.signUp` i `signInWithPassword`. Wtedy `accounts`, `createSalt`
-   i `hashPassword` z `persistence.ts` znikają — hasłami zarządza Supabase.
-2. **Ładowanie profilu.** Zaimplementuj `GameBackend` na `supabase-js` i wołaj
-   `loadProfile` po zalogowaniu zamiast czytać z `persist`.
-3. **Zapis.** W `mutate()` po `set(...)` dorzuć `void backend.saveProfile(draft)`.
-   Warto to zdebouncować (~500 ms), bo bitwy potrafią lecieć seriami.
-4. **Ranking.** `useRanking()` zamiast `Object.values(profiles)` czyta
-   `player_rankings` (z limitem i sortowaniem po stronie bazy).
-5. **`persist` zostaje jako cache offline** albo znika — obie opcje działają.
+## Pierwsze uruchomienie bazy
 
-## Uwaga o zaufaniu do klienta
+Najprościej — wklej `supabase-setup.sql` do Supabase → SQL Editor i uruchom.
+Plik tworzy schemat i wgrywa postacie przeniesione z wersji lokalnej. Można go
+puścić kilka razy, nic się nie zdublikuje.
 
-Dziś cała logika (walki, dropy, ceny) liczy się w przeglądarce, więc gracz może
-sobie nadpisać `localStorage` i dać sobie 10 000 złota. Przy jednoosobowej grze
-lokalnej to nie problem, ale **globalny ranking bez serwera nie ma sensu**.
+Alternatywnie, z lokalnej maszyny z ustawionym `DIRECT_URL`:
 
-Docelowo, przy Supabase, akcje zmieniające stan powinny trafić na serwer:
+```bash
+npm run db:migrate   # prisma migrate deploy
+npm run db:seed      # prisma db seed
+```
 
-- Next.js Server Actions albo Route Handlers z `SUPABASE_SERVICE_ROLE_KEY`, albo
-- Supabase Edge Functions
+## Hasła
 
-W obu wypadkach importujesz te same funkcje z `src/game/**` — nie trzeba
-przepisywać logiki, wystarczy przenieść miejsce jej wykonania. Klient zostaje
-wtedy tylko warstwą prezentacji, tak jak było w wersji laravelowej.
+Hashe są tagowane schematem, więc dwa formaty żyją obok siebie:
+
+- `scrypt$<sól>$<klucz>` — konta zakładane tutaj (`node:crypto`, bez zależności natywnych)
+- `sha256$<sól>$<klucz>` — przeniesione z wersji lokalnej, gdzie przeglądarka liczyła `SHA-256(sól + ":" + hasło)`
+
+Dzięki temu przeniesiona postać loguje się **tym samym hasłem co wcześniej** —
+nie trzeba go nigdzie znać ani resetować. Przy pierwszym udanym logowaniu wpis
+jest po cichu przepisywany na scrypt.
+
+## Migracja postaci z `localStorage`
+
+Kto grał przed podłączeniem bazy, ma postać w `localStorage` przeglądarki. Przy
+pierwszym wczytaniu gry klient wysyła ją na `POST /api/game/import`. Serwer
+przyjmuje ją **tylko wtedy, gdy konto nie ma jeszcze profilu**, więc nie da się
+tym nadpisać istniejącego postępu. Po udanym imporcie klucz jest kasowany.
+
+## Czego jeszcze nie ma
+
+- **Rate limiting** na `/api/auth/login`. Przy publicznym deployu warto dołożyć.
+- **RLS** nie jest włączone, bo nic poza serwerem nie łączy się z bazą — rolą
+  `postgres` z connection stringa. Gdyby kiedyś przeglądarka miała czytać
+  tabele bezpośrednio, RLS trzeba włączyć **zanim** to nastąpi.
+- Reset hasła — świadomie pominięty.

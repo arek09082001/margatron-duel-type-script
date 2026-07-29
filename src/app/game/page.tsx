@@ -106,10 +106,16 @@ export default function GamePage() {
 
     const user = snapshot.user;
 
-    /** Runs a store action and surfaces `GameError` messages in the alert modal. */
-    function run(action: () => void): void {
+    /**
+     * Runs a store action and surfaces `GameError` messages in the alert modal.
+     *
+     * Actions are round-trips to the server now, so this awaits them; failures
+     * leave the local profile untouched because the store only adopts the
+     * profile the server sends back.
+     */
+    async function run(action: () => Promise<unknown>): Promise<void> {
         try {
-            action();
+            await action();
         } catch (error) {
             setAlertMessage(errorMessage(error));
         }
@@ -154,8 +160,8 @@ export default function GamePage() {
             return;
         }
 
-        run(() => {
-            const result = store.fightStage(battleLocationId, stage.stage);
+        void run(async () => {
+            const result = await store.fightStage(battleLocationId, stage.stage);
 
             setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
             setLastFight({ kind: 'stage', locationId: battleLocationId, stage: stage.stage });
@@ -165,8 +171,8 @@ export default function GamePage() {
     }
 
     function startArenaFight(difficulty: ArenaDifficultyValue): void {
-        run(() => {
-            const result = store.fightArena(difficulty);
+        void run(async () => {
+            const result = await store.fightArena(difficulty);
 
             setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
             setLastFight({ kind: 'arena', difficulty });
@@ -180,8 +186,8 @@ export default function GamePage() {
             return;
         }
 
-        run(() => {
-            const result = store.fightTough(selectedLocationId, enemyType);
+        void run(async () => {
+            const result = await store.fightTough(selectedLocationId, enemyType);
 
             setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
             setLastFight({ kind: 'tough', locationId: selectedLocationId, enemyType });
@@ -251,8 +257,8 @@ export default function GamePage() {
     }
 
     function selectWorldMap(worldMap: WorldMapPin): void {
-        run(() => {
-            store.selectMap(worldMap.id);
+        void run(async () => {
+            await store.selectMap(worldMap.id);
             setView('map');
             setSelectedLocationId(null);
         });
@@ -265,11 +271,11 @@ export default function GamePage() {
             return;
         }
 
-        run(() => {
+        void run(async () => {
             if (item.type === 'potion' || item.itemType === 'potion') {
-                store.usePotion(index);
+                await store.usePotion(index);
             } else {
-                store.equipItem(index);
+                await store.equipItem(index);
             }
         });
     }
@@ -279,12 +285,12 @@ export default function GamePage() {
             return;
         }
 
-        run(() => store.buyItem(shopId, item.shopItemId ?? item.id));
+        void run(() => store.buyItem(shopId, item.shopItemId ?? item.id));
     }
 
     function buyPa(amount: number): void {
-        run(() => {
-            store.buyPa(amount);
+        void run(async () => {
+            await store.buyPa(amount);
             setShowPaShop(false);
         });
     }
@@ -308,10 +314,10 @@ export default function GamePage() {
                     user={user}
                     actionPointFlash={actionPointFlash}
                     onOpenPaShop={() => setShowPaShop(true)}
-                    onAddAttribute={(attribute: PlayerAttributeKey) => run(() => store.addAttribute(attribute))}
-                    onUnequip={(slot: EquipmentSlot) => run(() => store.unequipItem(slot))}
+                    onAddAttribute={(attribute: PlayerAttributeKey) => void run(() => store.addAttribute(attribute))}
+                    onUnequip={(slot: EquipmentSlot) => void run(() => store.unequipItem(slot))}
                     onUseInventoryItem={useInventoryItem}
-                    onSellInventoryItem={(index) => run(() => store.sellItem(index))}
+                    onSellInventoryItem={(index) => void run(() => store.sellItem(index))}
                     onShowTooltip={tooltip.show}
                     onHideTooltip={tooltip.hide}
                 />
@@ -371,8 +377,8 @@ export default function GamePage() {
                             location={selectedLocation}
                             user={user}
                             onBuy={buyItem}
-                            onSell={(index) => run(() => store.sellItem(index))}
-                            onSellAll={() => run(() => store.sellAllItems())}
+                            onSell={(index) => void run(() => store.sellItem(index))}
+                            onSellAll={() => void run(() => store.sellAllItems())}
                             onShowTooltip={tooltip.show}
                             onHideTooltip={tooltip.hide}
                             onBack={goBackToMap}
@@ -384,8 +390,8 @@ export default function GamePage() {
                             rest={snapshot.rest}
                             location={selectedLocation}
                             user={user}
-                            onRest={(minutes) => run(() => store.rest(minutes))}
-                            onInstantRest={() => run(() => store.instantRest())}
+                            onRest={(minutes) => void run(() => store.rest(minutes))}
+                            onInstantRest={() => void run(() => store.instantRest())}
                             onBack={goBackToMap}
                         />
                     )}

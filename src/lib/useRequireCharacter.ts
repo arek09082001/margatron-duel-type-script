@@ -1,25 +1,41 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { useCurrentProfile, useHydrated } from '@/store/hooks';
+import { useGameStore } from '@/store/gameStore';
+import { useCurrentProfile, useLoaded } from '@/store/hooks';
 
 /**
- * Sends the player back to the login screen when no character is active.
- * Waits for hydration first, otherwise the very first client render (before
- * localStorage is read) would always look logged out.
+ * Loads the signed-in player's character, and sends them to the login screen
+ * when there is no session.
+ *
+ * The load is fired once per mount; `loaded` gates rendering so the game never
+ * flashes a logged-out state while the request is in flight.
  */
 export function useRequireCharacter(): { ready: boolean } {
     const router = useRouter();
-    const hydrated = useHydrated();
+    const loaded = useLoaded();
     const profile = useCurrentProfile();
+    const load = useGameStore((state) => state.load);
+    const requested = useRef(false);
 
     useEffect(() => {
-        if (hydrated && !profile) {
+        if (requested.current) {
+            return;
+        }
+
+        requested.current = true;
+        void load().catch(() => {
+            // Falls through to the redirect below when there is no session.
+        });
+    }, [load]);
+
+    useEffect(() => {
+        if (loaded && !profile) {
             router.replace('/');
         }
-    }, [hydrated, profile, router]);
+    }, [loaded, profile, router]);
 
-    return { ready: hydrated && profile !== null };
+    return { ready: loaded && profile !== null };
 }

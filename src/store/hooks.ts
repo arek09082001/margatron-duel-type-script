@@ -3,29 +3,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { achievementsFor } from '@/game/achievements';
-import { levelRanking } from '@/game/ranking';
 import { buildSnapshot } from '@/game/state';
 import type { GameProfile, GameSnapshot, PlayerAchievements, PlayerRanking } from '@/game/types';
 import { useGameStore } from './gameStore';
 
-/**
- * True once the persisted store has been read from localStorage. Screens must
- * wait for this before rendering player data, otherwise the server-rendered
- * markup (empty store) and the first client render disagree.
- */
-export function useHydrated(): boolean {
-    return useGameStore((state) => state.hydrated);
+/** True once `/api/game` has answered, so screens do not flash a logged-out state. */
+export function useLoaded(): boolean {
+    return useGameStore((state) => state.loaded);
 }
 
 export function useCurrentProfile(): GameProfile | null {
-    return useGameStore((state) =>
-        state.currentAccountId ? (state.profiles[state.currentAccountId] ?? null) : null,
-    );
+    return useGameStore((state) => state.profile);
 }
 
 /**
- * Derived read model. Recomputed only when the profile object identity changes,
- * which happens exactly once per applied action or clock tick.
+ * Derived read model, recomputed only when the profile object identity changes
+ * — once per applied action or clock tick.
  */
 export function useSnapshot(): GameSnapshot | null {
     const profile = useCurrentProfile();
@@ -39,45 +32,41 @@ export function useAchievements(): PlayerAchievements | null {
     return useMemo(() => (profile ? achievementsFor(profile) : null), [profile]);
 }
 
+/** The global ranking, as computed server-side across every player. */
 export function useRanking(): PlayerRanking | null {
-    const profiles = useGameStore((state) => state.profiles);
-    const currentAccountId = useGameStore((state) => state.currentAccountId);
-
-    return useMemo(
-        () => (currentAccountId ? levelRanking(Object.values(profiles), currentAccountId) : null),
-        [profiles, currentAccountId],
-    );
+    return useGameStore((state) => state.ranking);
 }
 
 /**
- * Drives action-point regeneration and rest completion.
+ * Loads the profile once per mount, then drives local action-point ticking.
  *
- * Replaces the Reverb websocket + queue workers: the store settles itself from
- * timestamps, so one interval is enough. Also re-settles when the tab regains
- * focus, since background timers get throttled hard.
+ * The server settles authoritatively on every action; this only keeps the
+ * displayed counter moving in between, and re-syncs when the tab regains focus
+ * (another device may have spent PA in the meantime).
  */
 export function useGameClock(intervalMs = 1000): void {
     const tick = useGameStore((state) => state.tick);
+    const load = useGameStore((state) => state.load);
 
     useEffect(() => {
-        tick();
-
         const timer = window.setInterval(tick, intervalMs);
-        const onVisible = () => {
+        const resync = () => {
             if (document.visibilityState === 'visible') {
-                tick();
+                void load().catch(() => {
+                    // A failed background re-sync is not worth interrupting play.
+                });
             }
         };
 
-        document.addEventListener('visibilitychange', onVisible);
-        window.addEventListener('focus', tick);
+        document.addEventListener('visibilitychange', resync);
+        window.addEventListener('focus', resync);
 
         return () => {
             window.clearInterval(timer);
-            document.removeEventListener('visibilitychange', onVisible);
-            window.removeEventListener('focus', tick);
+            document.removeEventListener('visibilitychange', resync);
+            window.removeEventListener('focus', resync);
         };
-    }, [tick, intervalMs]);
+    }, [tick, load, intervalMs]);
 }
 
 /** A ticking clock for countdown labels. Returns epoch milliseconds. */
@@ -96,8 +85,8 @@ export function useNow(intervalMs = 1000): number {
 /**
  * Flashes for `durationMs` whenever `value` increases.
  *
- * Pass `null` while the value is still unknown (e.g. before hydration), so the
- * first real reading seeds the baseline instead of registering as a jump.
+ * Pass `null` while the value is still unknown (e.g. before the first load), so
+ * the first real reading seeds the baseline instead of registering as a jump.
  */
 export function useIncreaseFlash(value: number | null, durationMs = 900): boolean {
     const [flashing, setFlashing] = useState(false);
