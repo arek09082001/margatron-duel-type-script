@@ -1,0 +1,90 @@
+// Schema source of truth. Prisma is server-side only; the browser never sees it.
+//
+// Connection URLs live in `prisma.config.ts` (Prisma 7 moved them out of here).
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../src/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+/// Login credentials. Kept apart from the game data so a query for a profile
+/// can never accidentally carry a password hash with it.
+model Player {
+    id    String @id @default(uuid()) @db.Uuid
+    email String @unique
+    nick  String @unique
+
+    /// Format-tagged so old and new hashes can coexist:
+    ///   scrypt$<salt>$<key>  — accounts created here
+    ///   sha256$<salt>$<key>  — carried over from the local-only build
+    passwordHash String @map("password_hash")
+
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+    profile GameProfile?
+
+    @@map("players")
+}
+
+model GameProfile {
+    /// Same value as the owning player's id.
+    id   String @id @db.Uuid
+    nick String @unique
+
+    level  Int @default(1) @db.SmallInt
+    exp    Int @default(0)
+    expMax Int @default(20) @map("exp_max")
+    gold   Int @default(100)
+
+    pa              Int      @default(20) @db.SmallInt
+    paMax           Int      @default(20) @map("pa_max") @db.SmallInt
+    paRegeneratedAt DateTime @default(now()) @map("pa_regenerated_at") @db.Timestamptz(6)
+
+    playedSeconds Int      @default(0) @map("played_seconds")
+    lastSeenAt    DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+
+    vitality               Int @default(5) @db.SmallInt
+    strength               Int @default(5) @db.SmallInt
+    luck                   Int @default(5) @db.SmallInt
+    vitalityPointsAssigned Int @default(0) @map("vitality_points_assigned") @db.SmallInt
+    strengthPointsAssigned Int @default(0) @map("strength_points_assigned") @db.SmallInt
+    luckPointsAssigned     Int @default(0) @map("luck_points_assigned") @db.SmallInt
+    attributePoints        Int @default(0) @map("attribute_points") @db.SmallInt
+
+    hp         Int @default(50)
+    dmgMin     Int @default(1) @map("dmg_min")
+    dmgMax     Int @default(2) @map("dmg_max")
+    armor      Int @default(0)
+    critChance Int @default(5) @map("crit_chance")
+    critPower  Int @default(150) @map("crit_power")
+    dodge      Int @default(3)
+    stun       Int @default(0)
+
+    monstersKilled      Int @default(0) @map("monsters_killed")
+    uniqueItemsFound    Int @default(0) @map("unique_items_found")
+    heroicItemsFound    Int @default(0) @map("heroic_items_found")
+    legendaryItemsFound Int @default(0) @map("legendary_items_found")
+
+    currentMapId Int @default(1) @map("current_map_id") @db.SmallInt
+
+    /// Rest tasks keyed by option minutes.
+    restTasks Json @default("{}") @map("rest_tasks")
+    /// Unlocked stage per "{mapId}_{locationId}".
+    stageProgress Json @default("{}") @map("stage_progress")
+    /// Fixed-length array of 15 slots; nulls are empty.
+    inventory Json @default("[]")
+    /// { weapon, armor, accessory }
+    equipped Json @default("{\"weapon\":null,\"armor\":null,\"accessory\":null}")
+
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    player Player @relation(fields: [id], references: [id], onDelete: Cascade)
+
+    @@index([level(sort: Desc), exp(sort: Desc)], map: "game_profiles_ranking_idx")
+    @@map("game_profiles")
+}

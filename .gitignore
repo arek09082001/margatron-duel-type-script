@@ -6,6 +6,9 @@
 .pnp
 .pnp.*
 
+# generated code
+/src/generated
+
 # next.js
 /.next/
 /out/
