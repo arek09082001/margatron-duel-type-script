@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import GameTopBar from '@/components/game/GameTopBar';
 import ItemTooltip, { useItemTooltip } from '@/components/game/ItemTooltip';
@@ -73,6 +73,19 @@ export default function GamePage() {
 
     useGameClock();
     const actionPointFlash = useIncreaseFlash(snapshot?.user.pa ?? null);
+
+    // A queued action the server refused (usually because another device moved
+    // first) rolls the profile back. Say so rather than letting gold or items
+    // silently reappear.
+    const backgroundError = useGameStore((state) => state.lastError);
+    const clearBackgroundError = useGameStore((state) => state.clearError);
+
+    useEffect(() => {
+        if (backgroundError) {
+            setAlertMessage(backgroundError);
+            clearBackgroundError();
+        }
+    }, [backgroundError, clearBackgroundError]);
 
     // Locations are derived from the live snapshot rather than captured on
     // click, so stage unlocks show up immediately after a won fight.

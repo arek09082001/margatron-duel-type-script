@@ -47,26 +47,48 @@ export function useRanking(): PlayerRanking | null {
 export function useGameClock(intervalMs = 1000): void {
     const tick = useGameStore((state) => state.tick);
     const load = useGameStore((state) => state.load);
+    const flush = useGameStore((state) => state.flush);
 
     useEffect(() => {
         const timer = window.setInterval(tick, intervalMs);
-        const resync = () => {
-            if (document.visibilityState === 'visible') {
-                void load().catch(() => {
-                    // A failed background re-sync is not worth interrupting play.
+
+        // Coming back to the tab: send anything still queued *before* pulling
+        // the server's state, or the reload would discard those actions.
+        const resync = async () => {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+
+            try {
+                await flush();
+                await load();
+            } catch {
+                // A failed background re-sync is not worth interrupting play.
+            }
+        };
+
+        // Leaving the tab or the page: don't strand queued progress.
+        const persist = () => {
+            if (document.visibilityState === 'hidden') {
+                void flush().catch(() => {
+                    // Reported through the store's lastError; nothing to do here.
                 });
             }
         };
 
-        document.addEventListener('visibilitychange', resync);
-        window.addEventListener('focus', resync);
+        const onVisibility = () => {
+            void (document.visibilityState === 'visible' ? resync() : persist());
+        };
+
+        document.addEventListener('visibilitychange', onVisibility);
+        window.addEventListener('focus', () => void resync());
+        window.addEventListener('pagehide', () => void flush().catch(() => {}));
 
         return () => {
             window.clearInterval(timer);
-            document.removeEventListener('visibilitychange', resync);
-            window.removeEventListener('focus', resync);
+            document.removeEventListener('visibilitychange', onVisibility);
         };
-    }, [tick, load, intervalMs]);
+    }, [tick, load, flush, intervalMs]);
 }
 
 /** A ticking clock for countdown labels. Returns epoch milliseconds. */
