@@ -1057,6 +1057,16 @@
   transition: all 0.2s;
 }
 
+/* Tiers a map does not define. Overrides the per-tier colours below, so it has
+   to win on specificity — hence the doubled class. */
+.arena-difficulty-btn.arena-difficulty-btn:disabled {
+  background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+  border-color: #444;
+  color: #777;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
 .arena-difficulty-btn.easy {
   background: linear-gradient(to bottom, #2d5a27, #1a3a14);
   border-color: #4caf50;

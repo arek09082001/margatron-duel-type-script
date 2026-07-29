@@ -15,6 +15,7 @@ import ToughEnemyView from '@/components/game/views/ToughEnemyView';
 import WorldMapView from '@/components/game/views/WorldMapView';
 import Modal from '@/components/ui/Modal';
 import SettingsModal from '@/components/ui/SettingsModal';
+import { arenaPaCost } from '@/game/catalog';
 import { EXPEDITION_FIGHTS, STAGES_PER_LOCATION } from '@/game/config';
 import { errorMessage } from '@/game/errors';
 import type {
@@ -35,6 +36,18 @@ import { useGameClock, useIncreaseFlash, useSnapshot } from '@/store/hooks';
 
 type GameView = 'map' | 'battleSelection' | 'arena' | 'toughenemy' | 'battle' | 'shop' | 'rest' | 'worldMap';
 
+/**
+ * Enough context to repeat the fight the player just had.
+ *
+ * Expowiska used to be the only chainable fight because only the stage number
+ * was remembered. Recording the whole action lets arena and tough-enemy runs
+ * chain the same way.
+ */
+type LastFight =
+    | { kind: 'stage'; locationId: string; stage: number }
+    | { kind: 'arena'; difficulty: ArenaDifficultyValue }
+    | { kind: 'tough'; locationId: string; enemyType: ToughEnemyKind };
+
 const PA_OFFER_NAMES: Record<number, string> = {
     5: 'Mała butelka PA',
     10: 'Średnia butelka PA',
@@ -50,7 +63,7 @@ export default function GamePage() {
     const [view, setView] = useState<GameView>('map');
     const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
     const [battleLocationId, setBattleLocationId] = useState<string | null>(null);
-    const [lastBattleStage, setLastBattleStage] = useState<number | null>(null);
+    const [lastFight, setLastFight] = useState<LastFight | null>(null);
     const [battleResult, setBattleResult] = useState<BattleResult | null>(null);
     const [remainingFights, setRemainingFights] = useState<number | null>(null);
     const [shopId, setShopId] = useState<string | null>(null);
@@ -145,39 +158,19 @@ export default function GamePage() {
             const result = store.fightStage(battleLocationId, stage.stage);
 
             setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
-            setLastBattleStage(stage.stage);
+            setLastFight({ kind: 'stage', locationId: battleLocationId, stage: stage.stage });
             setBattleResult(result);
             setView('battle');
         });
     }
 
-    function continueBattle(): void {
-        if (!battleLocation || lastBattleStage === null) {
-            closeBattle();
-
-            return;
-        }
-
-        const stages = battleLocation.stages ?? [];
-        const nextStage = Math.min(STAGES_PER_LOCATION, lastBattleStage + (battleResult?.won ? 1 : 0));
-        const target =
-            stages.find((stage) => stage.stage === nextStage && stage.unlocked) ??
-            stages.find((stage) => stage.stage === lastBattleStage);
-
-        if (!target) {
-            closeBattle();
-
-            return;
-        }
-
-        fightStage(target);
-    }
-
     function startArenaFight(difficulty: ArenaDifficultyValue): void {
         run(() => {
-            setLastBattleStage(null);
-            setRemainingFights(null);
-            setBattleResult(store.fightArena(difficulty));
+            const result = store.fightArena(difficulty);
+
+            setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
+            setLastFight({ kind: 'arena', difficulty });
+            setBattleResult(result);
             setView('battle');
         });
     }
@@ -188,17 +181,70 @@ export default function GamePage() {
         }
 
         run(() => {
-            setLastBattleStage(null);
-            setRemainingFights(null);
-            setBattleResult(store.fightTough(selectedLocationId, enemyType));
+            const result = store.fightTough(selectedLocationId, enemyType);
+
+            setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
+            setLastFight({ kind: 'tough', locationId: selectedLocationId, enemyType });
+            setBattleResult(result);
             setView('battle');
         });
+    }
+
+    /** Repeats the previous fight: next stage for expowiska, same fight otherwise. */
+    function continueBattle(): void {
+        if (!lastFight) {
+            closeBattle();
+
+            return;
+        }
+
+        if (lastFight.kind === 'arena') {
+            startArenaFight(lastFight.difficulty);
+
+            return;
+        }
+
+        if (lastFight.kind === 'tough') {
+            startToughFight(lastFight.enemyType);
+
+            return;
+        }
+
+        const stages = battleLocation?.stages ?? [];
+        const nextStage = Math.min(STAGES_PER_LOCATION, lastFight.stage + (battleResult?.won ? 1 : 0));
+        const target =
+            stages.find((stage) => stage.stage === nextStage && stage.unlocked) ??
+            stages.find((stage) => stage.stage === lastFight.stage);
+
+        if (!target) {
+            closeBattle();
+
+            return;
+        }
+
+        fightStage(target);
+    }
+
+    /** PA the next chained fight would cost, so the button can say "Brak PA". */
+    function nextFightPaCost(): number {
+        if (!lastFight) {
+            return 0;
+        }
+
+        switch (lastFight.kind) {
+            case 'arena':
+                return arenaPaCost(lastFight.difficulty);
+            case 'stage':
+                return battleLocation?.pa ?? 1;
+            case 'tough':
+                return selectedLocation?.pa ?? 1;
+        }
     }
 
     function closeBattle(): void {
         setRemainingFights(null);
         setBattleResult(null);
-        setLastBattleStage(null);
+        setLastFight(null);
         setBattleLocationId(null);
         setView('map');
         setSelectedLocationId(null);
@@ -245,9 +291,13 @@ export default function GamePage() {
 
     const canContinueBattle =
         battleResult?.won === true &&
-        lastBattleStage !== null &&
+        lastFight !== null &&
         remainingFights !== null &&
         remainingFights > 0;
+
+    // Shown but disabled when PA ran out, so the run ends visibly rather than
+    // by the button quietly disappearing.
+    const continueBlockedByPa = canContinueBattle && user.pa < nextFightPaCost();
 
     return (
         <div id="game-container">
@@ -309,6 +359,7 @@ export default function GamePage() {
                             location={selectedLocation}
                             remainingFights={remainingFights}
                             canContinue={canContinueBattle}
+                            continueDisabled={continueBlockedByPa}
                             onContinue={continueBattle}
                             onClose={closeBattle}
                         />

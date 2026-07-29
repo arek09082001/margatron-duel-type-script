@@ -336,6 +336,11 @@ const KARKA_HAN: GameMapData = buildMap(3, {
         zubr: enemy('Żubr', 'zubr.gif', 135, 21, 34, 92, 18),
         grzechotnik: enemy('Grzechotnik', 'grzechotnik.gif', 105, 24, 39, 96, 20),
         giant_spider: enemy('Olbrzymi Pająk', 'giant_spider.gif', 150, 28, 44, 118, 26),
+        // Osada Zulusów and the hard arena both roll `spider_queen`, but it was
+        // only ever defined under `eliteEnemies` — so those fights threw
+        // "Nieznany przeciwnik [spider_queen]". Torneg and Werbin both list it
+        // as a normal enemy; Karka-han was the outlier.
+        spider_queen: enemy('Królowa Pająków', 'spider_queen.gif', 185, 34, 52, 150, 35),
     },
     eliteEnemies: {
         spider_queen: enemy('Królowa Pająków', 'spider_queen.gif', 185, 34, 52, 150, 35),

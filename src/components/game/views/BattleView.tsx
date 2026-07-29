@@ -12,6 +12,8 @@ type BattleViewProps = {
     /** Remaining fights in the current expedition, or null outside expowiska. */
     remainingFights: number | null;
     canContinue: boolean;
+    /** Continue is offered but unaffordable — shown greyed out with "Brak PA". */
+    continueDisabled?: boolean;
     onContinue: () => void;
     onClose: () => void;
 };
@@ -21,6 +23,7 @@ export default function BattleView({
     location,
     remainingFights,
     canContinue,
+    continueDisabled = false,
     onContinue,
     onClose,
 }: BattleViewProps) {
@@ -86,9 +89,10 @@ export default function BattleView({
                                 <button
                                     className="btn-battle-action btn-next"
                                     type="button"
+                                    disabled={continueDisabled}
                                     onClick={onContinue}
                                 >
-                                    Idź dalej ➜
+                                    {continueDisabled ? 'Brak PA' : 'Idź dalej ➜'}
                                 </button>
                             )}
                             <button className="btn-battle-action" type="button" onClick={onClose}>
