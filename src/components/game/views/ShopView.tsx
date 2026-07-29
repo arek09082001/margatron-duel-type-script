@@ -1,0 +1,131 @@
+'use client';
+
+import { useState } from 'react';
+
+import type { DecoratedLocation, Item, PlayerView, Shop } from '@/game/types';
+import { formatNumber, itemImage } from '@/lib/format';
+
+type ShopViewProps = {
+    shop: Shop | null;
+    location: DecoratedLocation | null;
+    user: PlayerView;
+    onBuy: (item: Item) => void;
+    onSell: (index: number) => void;
+    onShowTooltip: (item: Item | null | undefined, event: React.MouseEvent<HTMLElement>) => void;
+    onHideTooltip: () => void;
+    onBack: () => void;
+};
+
+export default function ShopView({
+    shop,
+    location,
+    user,
+    onBuy,
+    onSell,
+    onShowTooltip,
+    onHideTooltip,
+    onBack,
+}: ShopViewProps) {
+    const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+
+    // Keep the inventory index so selling addresses the right slot.
+    const sellableItems = user.inventory
+        .map((item, index) => ({ item, index }))
+        .filter((entry): entry is { item: Item; index: number } => entry.item !== null);
+
+    return (
+        <div className="inline-view shop-inline">
+            <div className="inline-header">{shop?.name ?? ''}</div>
+            <div
+                className="shop-main-content"
+                style={{
+                    backgroundImage: `url(${location?.imageUrl ?? ''})`,
+                    backgroundPositionY: '60%',
+                    backgroundSize: '100%',
+                }}
+            >
+                <div className="shop-tabs">
+                    <button
+                        type="button"
+                        className={tab === 'buy' ? 'active' : undefined}
+                        onClick={() => setTab('buy')}
+                    >
+                        Kup
+                    </button>
+                    <button
+                        type="button"
+                        className={tab === 'sell' ? 'active' : undefined}
+                        onClick={() => setTab('sell')}
+                    >
+                        Sprzedaj
+                    </button>
+                </div>
+
+                {tab === 'buy' && (
+                    <div className="shop-items-list">
+                        {(shop?.items ?? []).map((item) => {
+                            const cantAfford = user.gold < item.price;
+                            const cantUse = (item.level ?? 1) > user.level;
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`shop-row${cantAfford ? ' cant-afford' : ''}${cantUse ? ' cant-use' : ''}`}
+                                    onClick={() => onBuy(item)}
+                                    onMouseEnter={(event) => onShowTooltip(item, event)}
+                                    onMouseLeave={onHideTooltip}
+                                >
+                                    <img src={itemImage(item)} alt={item.name} className="shop-item-image" />
+                                    <span
+                                        className={`item-name ${item.rarityCss}`.trim()}
+                                        style={{ color: item.rarityColor }}
+                                    >
+                                        {item.name}
+                                    </span>
+                                    {(item.level ?? 1) > 1 && <span className="item-level">Poz. {item.level}</span>}
+                                    <span className={`item-price${cantAfford ? ' no-gold' : ''}`}>
+                                        💰 {item.price}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {tab === 'sell' && (
+                    <div className="shop-items-list">
+                        {sellableItems.map(({ item, index }) => (
+                            <div
+                                key={`${item.id}-${index}`}
+                                className="shop-row"
+                                onClick={() => onSell(index)}
+                                onMouseEnter={(event) => onShowTooltip(item, event)}
+                                onMouseLeave={onHideTooltip}
+                            >
+                                <img src={itemImage(item)} alt={item.name} className="shop-item-image" />
+                                <span
+                                    className={`item-name ${item.rarityCss}`.trim()}
+                                    style={{ color: item.rarityColor }}
+                                >
+                                    {item.name}
+                                </span>
+                                {(item.quantity ?? 1) > 1 && <span className="item-qty">x{item.quantity}</span>}
+                                <span className="item-price sell-price">💰 {Math.floor(item.price * 0.5)}</span>
+                            </div>
+                        ))}
+                        {sellableItems.length === 0 && <div className="empty-message">Plecak jest pusty</div>}
+                    </div>
+                )}
+
+                <div className="shop-gold-bar">
+                    Twoje złoto: <span className="gold-amount">{formatNumber(user.gold)}</span>
+                </div>
+            </div>
+            <div className="inline-footer">
+                <button className="btn-back" type="button" onClick={onBack}>
+                    ← Wyjdź ze sklepu
+                </button>
+            </div>
+        </div>
+    );
+}

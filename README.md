@@ -1,6 +1,8 @@
 # Margonem: Duel
 
-Przeglądarkowy RPG-duel inspirowany klasycznym frontendowym prototypem. Ta wersja jest przepisana na Laravel, Vue, Inertia i TypeScript, z normalnym backendem, autoryzacją, bazą danych, kolejkami oraz realtime przez Reverb.
+Przeglądarkowy RPG-duel inspirowany klasycznym frontendowym prototypem.
+Ta wersja jest przepisana na **Next.js (App Router), React i TypeScript**,
+ze stanem gry w **Zustandzie** — bez backendu, gotowa do wrzucenia na Vercela.
 
 <p align="center">
   <img src="docs/screenshots/home.jpg" alt="Ekran rejestracji i logowania" width="820">
@@ -12,196 +14,112 @@ Przeglądarkowy RPG-duel inspirowany klasycznym frontendowym prototypem. Ta wers
 
 ## Stack
 
-- PHP 8.4, Laravel 13, Laravel Sail
-- Vue 3, Inertia, TypeScript, Vite
-- MySQL 8.4, Redis, Horizon
-- Laravel Reverb i Echo do realtime odświeżania punktów akcji
-- Docker Compose dla developmentu i osobny production compose dla deploya
-- GitHub Actions deployujące obraz na serwer
+- Next.js 15 (App Router), React 19, TypeScript
+- Zustand + `persist` (localStorage) jako warstwa zapisu
+- Cała logika gry po stronie klienta, w czystym TypeScripcie
+- Deploy na Vercelu, bez bazy danych i bez kolejek
 
-## Wymagania
+Poprzednia wersja stała na Laravelu, MySQL, Redisie, Horizonie i Reverbie.
+Wszystko to zostało zastąpione: patrz [Co się zmieniło](#co-się-zmieniło).
 
-- Docker z Compose
-- PHP 8.4 i Composer lokalnie, tylko do pierwszego `composer install`
-- Node.js 20+, jeśli chcesz odpalać frontend poza Sailem
-
-Najwygodniej pracować przez Sail, wtedy PHP, MySQL, Redis, Horizon i Reverb siedzą w kontenerach.
-
-## Instalacja Lokalna
+## Uruchomienie
 
 ```bash
-composer install
-cp .env.example .env
+npm install
+npm run dev
 ```
 
-W `.env` ustaw wartości pod Saila:
+Gra jest pod `http://localhost:3000`. Nie trzeba nic konfigurować — plik
+`.env` jest opcjonalny (zobacz `.env.example`, jeśli chcesz zmienić tempo
+regeneracji PA albo ceny odpoczynku).
 
-```dotenv
-APP_NAME="Margonem: Duel"
-APP_ENV=local
-APP_DEBUG=true
-APP_URL=http://localhost:8123
-APP_PORT=8123
-VITE_PORT=5173
-APP_FORCE_HTTPS=false
-APP_VERSION=0.1.0
+## Deploy na Vercela
 
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=laravel
-DB_USERNAME=sail
-DB_PASSWORD=password
+Repo jest standardowym projektem Next.js, więc Vercel wykrywa wszystko sam:
 
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
-BROADCAST_CONNECTION=reverb
+1. Zaimportuj repozytorium na [vercel.com/new](https://vercel.com/new).
+2. Framework: **Next.js** (wykrywany automatycznie).
+3. Build command i output zostaw domyślne.
+4. Deploy.
 
-REDIS_CLIENT=phpredis
-REDIS_HOST=redis
-REDIS_PASSWORD=null
-REDIS_PORT=6379
+Zmienne środowiskowe nie są wymagane. Jeśli chcesz przestawić balans gry,
+dodaj wybrane `NEXT_PUBLIC_*` z `.env.example` w ustawieniach projektu.
 
-REVERB_APP_ID=mgduel-local
-REVERB_APP_KEY=mgduel-local-key
-REVERB_APP_SECRET=mgduel-local-secret
-REVERB_HOST=reverb
-REVERB_PORT=8080
-REVERB_SCHEME=http
-
-VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
-VITE_REVERB_HOST=localhost
-VITE_REVERB_PORT="${REVERB_PORT}"
-VITE_REVERB_SCHEME="${REVERB_SCHEME}"
-
-GAME_ACTION_POINT_REGENERATION_SECONDS=60
-GAME_ACTION_POINT_REGENERATION_LIMIT=20
-```
-
-Uruchom środowisko:
+## Skrypty
 
 ```bash
-./vendor/bin/sail up -d
-./vendor/bin/sail artisan key:generate
-./vendor/bin/sail artisan migrate
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run dev
+npm run dev         # serwer deweloperski
+npm run build       # produkcyjny build
+npm run start       # serwer produkcyjny
+npm run type-check  # tsc --noEmit
+npm run lint        # eslint
 ```
 
-Aplikacja będzie dostępna pod:
+## Struktura
 
-- gra: `http://localhost:8123`
-- Vite: `http://localhost:5173`
-- Reverb: `ws://localhost:8080`
-- Mailpit: `http://localhost:8025`
-
-## Codzienna Praca
-
-```bash
-./vendor/bin/sail up -d
-./vendor/bin/sail npm run dev
+```
+src/
+├── game/         logika domenowa — czysty TS, bez Reacta i bez storage
+│   ├── catalog.ts      mapy, lokacje, przeciwnicy, sklepy, bazy przedmiotów
+│   ├── profile.ts      statystyki, poziomy, regeneracja PA
+│   ├── battle.ts       auto-walka (expowiska, arena, mocni przeciwnicy)
+│   ├── items.ts        losowanie dropów i generowanie przedmiotów
+│   ├── inventory.ts    ekwipunek, zakładanie, sprzedaż, mikstury
+│   ├── rest.ts         odpoczynek w karczmie
+│   ├── state.ts        snapshot dla UI, mapa świata, sklep z PA
+│   ├── achievements.ts osiągnięcia
+│   └── ranking.ts      ranking po poziomie
+├── store/        Zustand: akcje gracza, zapis, selektory, zegar gry
+├── components/   komponenty React (te same klasy CSS co w wersji Vue)
+├── styles/       `legacy-*.css` — warstwa wizualna starego frontendu
+└── app/          trasy: `/`, `/game`, `/rankings`, `/achievements`
 ```
 
-Przy zmianach w backendzie zwykle wystarczy odświeżyć stronę. Przy zmianach w kolejkach lub eventach warto zrestartować workery:
+Podział jest celowy: `src/game/**` nie wie nic o Reakcie ani o tym, gdzie
+trzymany jest stan. Dzięki temu ta sama logika może później pojechać na serwer
+(Server Actions albo Supabase Edge Functions) bez przepisywania.
 
-```bash
-./vendor/bin/sail artisan horizon:terminate
-./vendor/bin/sail up -d horizon
-```
+## Punkty akcji i odpoczynek
 
-Horizon działa jako osobny serwis w `compose.yaml`, dzięki czemu nie trzeba mieszać procesu workera z webserverem.
+W wersji laravelowej PA odnawiały joby kolejki, a zmiany leciały przez Reverb.
+Teraz wszystko liczy się z czasu:
 
-## Punkty Akcji I Realtime
+- `paRegeneratedAt` to znacznik ostatniego naliczenia,
+- `settleProfile()` dolicza punkty na podstawie tego, ile czasu minęło,
+- to samo dotyczy odpoczynku w karczmie (`endsAt` w `restTasks`).
 
-Punkty akcji odnawiają się przez joby kolejki:
+Efekt jest ten sam co wcześniej: **PA odnawiają się także wtedy, gdy karta jest
+zamknięta**. Nie potrzeba do tego workera ani websocketu — wystarczy jeden
+interwał w `useGameClock()` plus przeliczenie przy wejściu i po powrocie
+do karty.
 
-- `GAME_ACTION_POINT_REGENERATION_SECONDS=60` określa co ile sekund wpada 1 PA
-- `GAME_ACTION_POINT_REGENERATION_LIMIT=20` określa limit automatycznej regeneracji
-- bonusy, level-upy i mikstury mogą podnieść PA ponad limit
-- gdy gracz jest ponad limitem, automatyczna regeneracja po prostu przestaje dobijać kolejne punkty
+## Konta i zapis
 
-Zmiany PA są broadcastowane przez Reverb, więc widok gracza aktualizuje się bez ręcznego odświeżania.
+Konta są **lokalne**. Rejestracja tworzy postać w `localStorage` tej
+przeglądarki (hasło jest solone i hashowane SHA-256, ale to tylko prosta
+bramka — bez serwera nie ma czego uwierzytelniać). W jednej przeglądarce może
+istnieć wiele postaci.
 
-## Testy I Jakość
+Z tego wynika też ranking: obejmuje postacie z tej przeglądarki, nie graczy z
+całego świata. Globalna tabela przyjdzie razem z Supabase.
 
-```bash
-./vendor/bin/sail artisan test
-./vendor/bin/sail npm run type-check
-./vendor/bin/sail npm run build
-./vendor/bin/sail pint
-```
+## Supabase
 
-Przed deployem minimum to testy PHP, type-check TypeScriptu i produkcyjny build Vite.
+Plan przejścia na Supabase — wraz z gotowym schematem SQL, politykami RLS i
+listą kroków — jest w [`docs/SUPABASE.md`](docs/SUPABASE.md).
 
-## Produkcja
+## Co się zmieniło
 
-Deploy produkcyjny jest w `.github/workflows/deploy-production.yml`. Push do `main`:
+| Wcześniej (Laravel) | Teraz (Next.js) |
+| --- | --- |
+| Kontrolery + Inertia | Trasy App Routera, akcje w storze |
+| Eloquent + MySQL | `GameProfile` w Zustandzie (localStorage) |
+| Serwisy w `app/Game/Services` | Moduły w `src/game/**` (port 1:1) |
+| Joby kolejki (PA, odpoczynek) | Przeliczanie ze znaczników czasu |
+| Reverb + Echo (websocket) | Interwał w `useGameClock()` |
+| Sesje Laravela | Lokalne konta w `localStorage` |
+| Komponenty Vue 3 | Komponenty React (te same klasy CSS) |
+| Docker Compose, Horizon, deploy przez GH Actions | Deploy na Vercelu |
 
-1. pobiera `.env` z Envly,
-2. buduje obraz Docker,
-3. wysyła artefakty na serwer,
-4. uruchamia `docker compose -f docker-compose.production.yml`,
-5. odpala migracje,
-6. restartuje aplikację, Reverb, Horizon worker, scheduler i phpMyAdmin.
-
-Wymagane sekrety GitHub Actions:
-
-```text
-ENVLY_TOKEN
-SERVER_HOST
-SERVER_USER
-SERVER_SSH_KEY
-```
-
-Domyślny production target na serwerze:
-
-```text
-/opt/apps/mgduel
-```
-
-Na produkcji za Cloudflare ustaw:
-
-```dotenv
-APP_ENV=production
-APP_DEBUG=false
-APP_FORCE_HTTPS=true
-APP_VERSION=0.1.0
-APP_URL=https://twoja-domena.pl
-VIRTUAL_HOST=twoja-domena.pl
-```
-
-`APP_FORCE_HTTPS=true` dodaje do głównego Blade meta tag `upgrade-insecure-requests`, co rozwiązuje typowe problemy Inertia/Axios z mixed content za Cloudflare.
-
-## Ważne Pliki
-
-- `app/Game/Services` - logika domenowa gry
-- `app/Game/Repositories` - katalog statycznych danych gry
-- `app/Game/Enums` i `app/Game/Attributes` - mapy, lokacje, rzadkości itemów i metadane
-- `app/Http/Requests` - walidacja akcji gracza
-- `app/Http/Resources` - kontrakt danych wysyłanych do Vue
-- `resources/js/Pages` - ekrany Inertia/Vue
-- `resources/css/legacy-*.css` - warstwa wizualna odtwarzająca stary frontend
-- `docker-compose.production.yml` - produkcyjny runtime
-
-## Przydatne Komendy
-
-```bash
-# logi aplikacji
-./vendor/bin/sail logs -f laravel.test
-
-# logi Horizon
-./vendor/bin/sail logs -f horizon
-
-# logi Reverb
-./vendor/bin/sail logs -f reverb
-
-# świeże migracje lokalnie
-./vendor/bin/sail artisan migrate:fresh
-
-# czyszczenie cache configu i widoków
-./vendor/bin/sail artisan optimize:clear
-```
-
-## Screenshoty
-
-Aktualne screenshoty do README są w `docs/screenshots`. Po większych zmianach UI warto je odświeżyć, żeby README pokazywał realny stan aplikacji.
+Zasady gry — obrażenia, krytyki, uniki, tabele dropów, ceny, progi poziomów,
+osiągnięcia — zostały przeniesione bez zmian.

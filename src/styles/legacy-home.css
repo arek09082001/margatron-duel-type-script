@@ -1,0 +1,257 @@
+/* ... twój obecny CSS bez zmian ... */
+#centerbox {
+  width: 980px;
+  height: 576px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -288px 0 0 -490px;
+  background: #223;
+}
+
+#logo {
+  position: absolute;
+  width: 980px;
+  height: 43px;
+  background: url("/game-assets/header.jpg") no-repeat 0 0;
+  overflow: hidden;
+}
+
+#ver {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  color: #ffd;
+  font-size: 11px;
+}
+
+#content {
+  position: absolute;
+  background: url("/game-assets/mainback.jpg");
+  border: 1px solid #333;
+  border-radius: 5px;
+  top: 42px;
+  width: 980px;
+  height: 512px;
+  box-sizing: border-box;
+}
+
+#welcome {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+  width: 100%;
+  height: 100%;
+  background: url("/game-assets/welcome.jpg");
+}
+
+#centerbox section {
+  padding: 15px;
+  min-width: 250px;
+}
+
+#signup {
+  position: absolute;
+  left: 60px;
+  top: 60px;
+  height: 210px;
+  width: 320px;
+  padding: 10px 0;
+  line-height: 30px;
+  text-align: center;
+  border: 1px solid gold;
+  background: rgba(0, 50, 0, 0.5);
+  border-radius: 5px;
+}
+
+#signup::before {
+  content: "Rejestracja";
+  display: block;
+  color: #c9a227;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#login {
+  position: absolute;
+  right: 60px;
+  top: 280px;
+  height: 190px;
+  width: 310px;
+  padding: 10px 0;
+  line-height: 30px;
+  text-align: center;
+  border: 1px solid gold;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+}
+
+#login::before {
+  content: "Logowanie";
+  display: block;
+  color: gold;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#login small {
+  color: white;
+}
+
+#centerbox .form-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 20px;
+  height: 30px;
+}
+
+#centerbox label {
+  display: block;
+  flex: 0 0 130px;
+  width: 130px;
+  text-align: right;
+  float: none;
+  cursor: default;
+  color: #ccc;
+}
+
+#centerbox input {
+  display: block;
+  flex: 0 0 150px;
+  width: 150px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid #000;
+  background: #1a1a15;
+  color: #fff;
+}
+
+#centerbox input:focus {
+  outline: none;
+  border-color: #c9a227;
+}
+
+#centerbox input.good {
+  border-color: #5a5;
+  background: #1a2a1a;
+}
+
+#centerbox button {
+  border-radius: 5px;
+  border: 1px solid gold;
+  background: black;
+  color: gold;
+  font-family: 'Cinzel', serif;
+  padding: 2px 10px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+#centerbox button:hover:not(:disabled) {
+  background: linear-gradient(to bottom, #5a5a4a, #3a3a30);
+  border-color: #c9a227;
+}
+
+#centerbox button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#centerbox small {
+  display: block;
+  margin-top: 15px;
+  color: #888;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 11px;
+}
+
+#centerbox small:hover {
+  color: #c9a227;
+}
+
+#alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#alert #box {
+  background: #1a1a15;
+  border: 2px solid #c9a227;
+  padding: 20px 40px;
+  text-align: center;
+  border-radius: 5px;
+}
+
+#alert header {
+  color: #c9a227;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+#alert section {
+  color: #ccc;
+  margin-bottom: 20px;
+}
+
+#passrecover {
+  position: absolute;
+  top: 270px;
+  left: 360px;
+  width: 240px;
+  height: 170px;
+  padding: 10px 0;
+  line-height: 33px;
+  text-align: center;
+  border: 3px double gold;
+  background: rgba(0, 0, 123, 0.5);
+  border-radius: 5px;
+}
+
+#passrecover h2 {
+  color: #c9a227;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+#passrecover button {
+  margin: 5px;
+}
+
+#centerbox footer {
+  position: absolute;
+  left: 0;
+  top: 556px;
+  width: 980px;
+  height: 20px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 20px;
+  background: url("/game-assets/footer.jpg");
+  color: #ffd;
+}
+
+#centerbox footer a {
+  color: #ffd;
+  text-decoration: none;
+}
+
+#online {
+  color: #5a5;
+}
