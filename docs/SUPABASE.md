@@ -15,10 +15,35 @@ jest używane** — logowanie jest własne (nick albo email + hasło).
 | API | `src/app/api/**` |
 | Klient (cache do renderowania) | `src/store/gameStore.ts` |
 
-Klient wysyła **intencję** (`{ type: 'fightStage', ... }`), nigdy gotowego
-stanu. Serwer wczytuje profil, uruchamia tę samą funkcję z `src/game/**`,
-zapisuje wynik i odsyła nowy profil. Dzięki temu podmiana `localStorage` nie
-daje już nikomu 10 000 złota.
+### Gdzie liczy się gra
+
+Logika wykonuje się **w przeglądarce**. Każda akcja, łącznie z walkami, jest
+liczona lokalnie i renderowana natychmiast, a gotowy profil trafia na serwer
+przy wyjściu z lokacji, ukryciu karty albo po chwili bezczynności
+(`PUT /api/game/profile`).
+
+To świadomy kompromis dla gry jednoosobowej: **serwer ufa temu, co przyśle
+klient**. Inaczej się nie da — walka rzuca kośćmi, więc serwer i tak nie
+odtworzyłby lokalnie rozegranego starcia bez przesyłania ziarna losowości.
+Zysk: łańcuch 20 walk to zero zapytań zamiast dwudziestu.
+
+Jedyna reguła, która nadal obowiązuje po stronie serwera, to **kontrola
+wersji**. Zapis niesie `baseRevision` (znacznik `updated_at` wiersza, z
+którego klient wystartował). Jeśli w międzyczasie zapisało inne urządzenie,
+serwer odrzuca zapis (409) i odsyła swój stan — stara karta nie nadpisze
+nowszego postępu.
+
+Z tego powodu `GET /api/game` **nie zapisuje**. Naliczanie PA i odpoczynków
+wynika wyłącznie ze znaczników czasu, więc przeliczenie przy następnym
+odczycie daje ten sam wynik; zapisywanie go podbijałoby `updated_at` i
+unieważniało wersję trzymaną przez inne otwarte karty.
+
+### Gdyby kiedyś miało być inaczej
+
+Ranking jest wspólny, więc gdy w grę wejdzie ktoś poza Tobą, logikę trzeba
+przenieść na serwer. `src/game/**` jest czystym TypeScriptem bez zależności od
+Reacta i storage, więc chodzi wyłącznie o to, *gdzie* wywołać
+`applyGameAction` — przy poprzedniej wersji robił to `POST /api/game/action`.
 
 ## Zmienne środowiskowe
 

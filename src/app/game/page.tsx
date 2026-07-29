@@ -134,9 +134,17 @@ export default function GamePage() {
         }
     }
 
+    /**
+     * Leaving a location is the natural save point: fights resolve locally so a
+     * chain of them costs no requests, and the result is pushed once the player
+     * steps back out to the map.
+     */
     function goBackToMap(): void {
         setView('map');
         setSelectedLocationId(null);
+        void store.flush().catch(() => {
+            // Reported through the store's lastError.
+        });
     }
 
     function confirmEnterLocation(): void {
@@ -267,6 +275,9 @@ export default function GamePage() {
         setBattleLocationId(null);
         setView('map');
         setSelectedLocationId(null);
+        void store.flush().catch(() => {
+            // Reported through the store's lastError.
+        });
     }
 
     function selectWorldMap(worldMap: WorldMapPin): void {
@@ -274,6 +285,7 @@ export default function GamePage() {
             await store.selectMap(worldMap.id);
             setView('map');
             setSelectedLocationId(null);
+            await store.flush();
         });
     }
 

@@ -8,35 +8,52 @@
  * whatever the client sends.
  */
 
-import { applyGameAction, type GameAction } from '@/game/actions';
 import { GameError } from '@/game/errors';
 import { createProfile, recalculate } from '@/game/profile';
 import { settleProfile } from '@/game/state';
 import { levelRanking } from '@/game/ranking';
-import type { BattleResult, GameProfile, PlayerRanking } from '@/game/types';
+import type { GameProfile, PlayerRanking } from '@/game/types';
 import { prisma } from './prisma';
 import { profileToRow, rowToProfile } from './profileMapper';
 import type { SessionPlayer } from './session';
 
 /**
- * The client gets the profile, not a snapshot: it derives the snapshot with
- * the same pure `buildSnapshot`, which keeps the payload small and lets it
- * tick action-point regeneration locally between actions.
+ * Identifies which version of a row a client based its changes on.
+ *
+ * Gameplay is client-authoritative, so a sync overwrites the stored profile
+ * wholesale. Without this, a tab left open on another device would flush its
+ * stale copy and silently wipe out newer progress — a far worse failure than
+ * the cheating we are already accepting.
  */
-export type ActionResult = {
+export type ProfileRevision = string;
+
+export type LoadedProfile = {
     profile: GameProfile;
-    /** One entry per submitted action; null for actions with no battle. */
-    battles: Array<BattleResult | null>;
-    /** Index of the first action that failed, if any. Earlier ones still applied. */
-    failedIndex?: number;
-    /** Why that action failed, for the alert modal. */
-    message?: string;
+    revision: ProfileRevision;
 };
+
+export class RevisionConflictError extends Error {
+    constructor(readonly current: LoadedProfile) {
+        super('Profil został zmieniony na innym urządzeniu.');
+        this.name = 'RevisionConflictError';
+    }
+}
 
 export async function loadProfile(userId: string): Promise<GameProfile | null> {
     const row = await prisma.gameProfile.findUnique({ where: { id: userId } });
 
     return row ? rowToProfile(row) : null;
+}
+
+/** `updatedAt` doubles as the revision — no extra column, no extra migration. */
+function revisionOf(updatedAt: Date): ProfileRevision {
+    return updatedAt.toISOString();
+}
+
+export async function loadProfileWithRevision(userId: string): Promise<LoadedProfile | null> {
+    const row = await prisma.gameProfile.findUnique({ where: { id: userId } });
+
+    return row ? { profile: rowToProfile(row), revision: revisionOf(row.updatedAt) } : null;
 }
 
 export async function saveProfile(profile: GameProfile): Promise<void> {
@@ -96,61 +113,55 @@ async function uniqueNick(preferred: string): Promise<string> {
     throw new GameError('Nie udało się nadać unikalnego nicku.');
 }
 
+
 /**
- * Runs a batch of actions in order.
+ * The caller's profile, brought up to date with the wall clock.
  *
- * The client applies deterministic actions optimistically and flushes them
- * together — often alongside a battle — so a handful of clicks costs one
- * request instead of one each.
- *
- * A failing action stops the batch rather than aborting it: everything before
- * it was legal and the player already saw it applied. The returned profile is
- * the state after the last successful action, and `failedIndex` tells the
- * client how far to trust its optimistic copy.
+ * Deliberately does **not** write. Settling is derived purely from stored
+ * timestamps, so recomputing it on the next read gives the same answer — and
+ * persisting it here would bump `updated_at`, invalidating the revision every
+ * other open client is holding. A read must never invalidate a writer.
  */
-export async function runActions(
+export async function currentProfile(player: SessionPlayer): Promise<LoadedProfile> {
+    await getOrCreateProfile(player);
+
+    const loaded = (await loadProfileWithRevision(player.id))!;
+
+    settleProfile(loaded.profile, Date.now());
+
+    return loaded;
+}
+
+/**
+ * Persists the profile the client computed.
+ *
+ * Gameplay runs in the browser so battles resolve instantly, which means this
+ * trusts the payload. `baseRevision` is the guard that matters: it must match
+ * the row the client last read, otherwise another device has written since and
+ * overwriting would destroy that progress.
+ */
+export async function syncProfile(
     player: SessionPlayer,
-    actions: GameAction[],
-): Promise<ActionResult> {
-    const profile = await getOrCreateProfile(player);
-    const now = Date.now();
+    incoming: GameProfile,
+    baseRevision: ProfileRevision,
+): Promise<LoadedProfile> {
+    const stored = await loadProfileWithRevision(player.id);
 
-    settleProfile(profile, now);
-
-    const battles: Array<BattleResult | null> = [];
-    let failedIndex: number | undefined;
-    let message: string | undefined;
-
-    for (const [index, action] of actions.entries()) {
-        try {
-            battles.push(applyGameAction(profile, action, now) ?? null);
-        } catch (error) {
-            if (!(error instanceof GameError)) {
-                throw error;
-            }
-
-            failedIndex = index;
-            message = error.message;
-            break;
-        }
+    if (!stored) {
+        throw new GameError('Brak postaci do zapisania.');
     }
+
+    if (stored.revision !== baseRevision) {
+        throw new RevisionConflictError(stored);
+    }
+
+    // id and nick come from the session, never from the payload.
+    const profile: GameProfile = { ...incoming, id: player.id, nick: stored.profile.nick };
 
     recalculate(profile);
     await saveProfile(profile);
 
-    return { profile, battles, failedIndex, message };
-}
-
-/** Settles and persists without applying an action — used by the initial load. */
-export async function currentProfile(player: SessionPlayer): Promise<GameProfile> {
-    const profile = await getOrCreateProfile(player);
-    const now = Date.now();
-
-    if (settleProfile(profile, now)) {
-        await saveProfile(profile);
-    }
-
-    return profile;
+    return (await loadProfileWithRevision(player.id))!;
 }
 
 export async function globalRanking(userId: string, limit = 20): Promise<PlayerRanking> {
