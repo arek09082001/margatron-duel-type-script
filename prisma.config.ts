@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import path from 'node:path';
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 
 /**
  * Prisma 7 moved connection URLs out of `schema.prisma` and into this file.
@@ -16,6 +16,11 @@ export default defineConfig({
         seed: 'tsx prisma/seed.ts',
     },
     datasource: {
-        url: env('DIRECT_URL'),
+        // Read leniently rather than through Prisma's `env()` helper, which
+        // throws while the config loads. `prisma generate` runs during the
+        // Vercel build and does not need a database, so a missing value must
+        // not break the build — only the migrate commands actually need it,
+        // and they fail with their own clear error.
+        url: process.env.DIRECT_URL ?? '',
     },
 });
