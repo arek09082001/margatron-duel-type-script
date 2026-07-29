@@ -6,12 +6,12 @@
  * live in a Zustand store today and in a Supabase `game_profiles` row later.
  */
 
-export type ItemTypeValue = 'weapon' | 'armor' | 'talisman' | 'potion';
+export type ItemTypeValue = 'weapon' | 'armor' | 'talisman' | 'potion' | 'bag';
 export type ItemRarityValue = 'common' | 'unique' | 'heroic' | 'legendary';
 export type LocationTypeValue = 'battle' | 'arena' | 'toughenemy' | 'shop' | 'rest' | 'worldmap';
 export type ArenaDifficultyValue = 'easy' | 'medium' | 'hard';
 export type PlayerAttributeKey = 'vitality' | 'strength' | 'luck';
-export type EquipmentSlot = 'weapon' | 'armor' | 'accessory';
+export type EquipmentSlot = 'weapon' | 'armor' | 'accessory' | 'bag';
 export type ToughEnemyKind = 'elite' | 'elite2' | 'hero';
 
 export type StatKey =
@@ -27,7 +27,10 @@ export type StatKey =
     // Carried on high-end shop items. They feed item power/price but are not
     // consumed by `recalculate` yet — kept so the numbers match the PHP build.
     | 'doubleDamage'
-    | 'doubleArmor';
+    | 'doubleArmor'
+    // Only bags carry this one. It widens the backpack instead of feeding a
+    // combat stat, so `recalculate` ignores it — see `inventorySize`.
+    | 'bagSlots';
 
 export type ItemStats = Partial<Record<StatKey, number>>;
 
@@ -83,6 +86,8 @@ export type Equipped = {
     weapon: Item | null;
     armor: Item | null;
     accessory: Item | null;
+    /** Widens the backpack while worn. */
+    bag: Item | null;
 };
 
 export type GameProfile = {
@@ -131,6 +136,7 @@ export type GameProfile = {
     currentMapId: number;
     /** Keyed by `"{mapId}_{locationId}"`. */
     stageProgress: Record<string, number>;
+    /** As many slots as the equipped bag allows; nulls are empty. */
     inventory: Array<Item | null>;
     equipped: Equipped;
 };
@@ -288,6 +294,8 @@ export type PlayerView = ActionPointState & {
     stun: number;
     currentMapId: number;
     inventory: Array<Item | null>;
+    /** Slots the backpack currently has, base size plus the equipped bag. */
+    inventorySize: number;
     equipped: Equipped;
 };
 

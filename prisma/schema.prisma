@@ -75,10 +75,10 @@ model GameProfile {
     restTasks Json @default("{}") @map("rest_tasks")
     /// Unlocked stage per "{mapId}_{locationId}".
     stageProgress Json @default("{}") @map("stage_progress")
-    /// Fixed-length array of 15 slots; nulls are empty.
+    /// 15 slots plus whatever the equipped bag adds; nulls are empty.
     inventory Json @default("[]")
-    /// { weapon, armor, accessory }
-    equipped Json @default("{\"weapon\":null,\"armor\":null,\"accessory\":null}")
+    /// { weapon, armor, accessory, bag }
+    equipped Json @default("{\"weapon\":null,\"armor\":null,\"accessory\":null,\"bag\":null}")
 
     createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
     updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

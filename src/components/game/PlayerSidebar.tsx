@@ -4,7 +4,7 @@ import { INVENTORY_SIZE } from '@/game/config';
 import type { EquipmentSlot, Item, PlayerAttributeKey, PlayerView } from '@/game/types';
 import { formatNumber, itemImage } from '@/lib/format';
 
-const EQUIPMENT_SLOTS: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+const EQUIPMENT_SLOTS: EquipmentSlot[] = ['weapon', 'armor', 'accessory', 'bag'];
 
 type PlayerSidebarProps = {
     user: PlayerView;
@@ -33,6 +33,13 @@ export default function PlayerSidebar({
 }: PlayerSidebarProps) {
     const expPercent = user.expMax > 0 ? (user.exp / user.expMax) * 100 : 0;
     const showAttributeButtons = !readOnly && user.attributePoints > 0;
+
+    // Falls back to the base size for a profile loaded by an older client that
+    // did not send the field yet.
+    const inventorySize = user.inventorySize ?? INVENTORY_SIZE;
+    const usedSlots = user.inventory
+        .slice(0, inventorySize)
+        .filter((item) => item !== null).length;
 
     return (
         <aside id="left-panel" className={readOnly ? 'read-only' : undefined}>
@@ -156,8 +163,11 @@ export default function PlayerSidebar({
             </div>
 
             <div className="panel-section inventory-section">
+                <div className="inv-capacity">
+                    PLECAK: <span className="val">{usedSlots}/{inventorySize}</span>
+                </div>
                 <div className="inv-grid-classic">
-                    {Array.from({ length: INVENTORY_SIZE }, (_, index) => {
+                    {Array.from({ length: inventorySize }, (_, index) => {
                         const item = user.inventory[index];
 
                         return (

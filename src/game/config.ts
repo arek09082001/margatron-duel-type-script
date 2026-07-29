@@ -40,7 +40,17 @@ export const GAME_CONFIG = {
 
 export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '0.2.0';
 
+/** Backpack slots without a bag. Bags add to this — see `inventorySize`. */
 export const INVENTORY_SIZE = 15;
+/**
+ * Hard ceiling for the backpack.
+ *
+ * The grid is five columns wide, so this keeps the sidebar to six rows even if
+ * a future bag hands out more slots than the catalogue does today.
+ */
+export const MAX_INVENTORY_SIZE = 30;
+/** The most a single bag may add, so no item can exceed the grid on its own. */
+export const MAX_BAG_SLOTS = MAX_INVENTORY_SIZE - INVENTORY_SIZE;
 export const ACTION_POINTS_PER_LEVEL = 5;
 /** Idle time beyond this is not counted towards the "time played" achievement. */
 export const PLAY_SESSION_GRACE_SECONDS = 300;

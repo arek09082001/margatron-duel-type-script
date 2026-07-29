@@ -500,6 +500,21 @@ export const SHOPS: Record<string, Shop> = {
                 { critChance: 2, hp: 15 },
                 500,
             ),
+
+            // Bags. Priced well above gear of the same level: the backpack is
+            // the thing that limits how long a player can stay out farming, so
+            // widening it should cost a few expeditions' worth of gold.
+            shopItem(231, 'Sakiewka', 'items/bag_pouch.png', 'bag', 'common', 1, { bagSlots: 3 }, 400),
+            shopItem(
+                232,
+                'Worek podróżny',
+                'items/bag_sack.png',
+                'bag',
+                'unique',
+                6,
+                { bagSlots: 5 },
+                1600,
+            ),
         ],
     },
     blacksmith_2: {
@@ -656,6 +671,27 @@ export const SHOPS: Record<string, Shop> = {
                 { hp: 120, critChance: 8, critPower: 30, stun: 4 },
                 20000,
             ),
+
+            shopItem(
+                431,
+                'Wzmocniony Worek',
+                'items/bag_sack.png',
+                'bag',
+                'unique',
+                12,
+                { bagSlots: 7 },
+                4500,
+            ),
+            shopItem(
+                432,
+                'Torba wędrowca',
+                'items/bag_satchel.png',
+                'bag',
+                'heroic',
+                20,
+                { bagSlots: 10 },
+                13000,
+            ),
         ],
     },
     blacksmith_3: {
@@ -737,6 +773,28 @@ export const SHOPS: Record<string, Shop> = {
                 38,
                 { hp: 300, critChance: 10, critPower: 60, stun: 8 },
                 250000,
+            ),
+
+            shopItem(
+                731,
+                'Plecak Poszukiwacza',
+                'items/bag_backpack.png',
+                'bag',
+                'heroic',
+                30,
+                { bagSlots: 12 },
+                40000,
+            ),
+            // The ceiling: `MAX_BAG_SLOTS` on top of the base backpack.
+            shopItem(
+                732,
+                'Bezdenny Plecak',
+                'items/bag_backpack.png',
+                'bag',
+                'legendary',
+                38,
+                { bagSlots: 15 },
+                200000,
             ),
         ],
     },
@@ -871,6 +929,15 @@ export type ItemBase = {
     dmgMin?: number;
     dmgMax?: number;
     armor?: number;
+    /** Bags only: extra backpack slots before the rarity multiplier. */
+    bagSlots?: number;
+    /**
+     * Bags only: the enemy level a drop must reach for this base to appear.
+     *
+     * Bags are permanent quality-of-life rather than a stat curve, so they are
+     * gated by level here instead of being scaled like weapons and armour.
+     */
+    minLevel?: number;
     effect?: { type: string; value: number };
 };
 
@@ -897,6 +964,14 @@ export const ITEM_BASES: Record<ItemTypeValue, ItemBase[]> = {
         { name: 'Runa', image: 'items/rune.gif' },
     ],
     potion: [{ name: 'Butelka PA', image: 'items/pa.gif', effect: { type: 'pa', value: 5 } }],
+    // Masculine names on purpose: `RARITY_PREFIXES` only carries the masculine
+    // form, so "Mocna Sakiewka" would come out as "Mocny Sakiewka".
+    bag: [
+        { name: 'Mieszek', image: 'items/bag_pouch.png', bagSlots: 2, minLevel: 1 },
+        { name: 'Worek podróżny', image: 'items/bag_sack.png', bagSlots: 4, minLevel: 8 },
+        { name: 'Tobołek wędrowca', image: 'items/bag_satchel.png', bagSlots: 6, minLevel: 18 },
+        { name: 'Plecak', image: 'items/bag_backpack.png', bagSlots: 8, minLevel: 28 },
+    ],
 };
 
 export const RARITY_PREFIXES: Partial<Record<ItemRarityValue, string[]>> = {

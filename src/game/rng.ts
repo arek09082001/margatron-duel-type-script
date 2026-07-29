@@ -38,6 +38,27 @@ export function pick<T>(items: readonly T[]): T {
     return items[randomInt(0, items.length - 1)];
 }
 
+/** Weighted variant of `pick`. Entries with a weight of 0 never come up. */
+export function pickWeighted<T>(items: readonly T[], weightOf: (item: T) => number): T {
+    const total = items.reduce((sum, item) => sum + Math.max(0, weightOf(item)), 0);
+
+    if (total <= 0) {
+        return pick(items);
+    }
+
+    let cursor = randomFloat() * total;
+
+    for (const item of items) {
+        cursor -= Math.max(0, weightOf(item));
+
+        if (cursor <= 0) {
+            return item;
+        }
+    }
+
+    return items[items.length - 1];
+}
+
 export function shuffled<T>(items: readonly T[]): T[] {
     const copy = [...items];
 

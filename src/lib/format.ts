@@ -34,6 +34,7 @@ const STAT_NAMES: Record<string, string> = {
     armor: 'Pancerz',
     doubleDamage: 'Podwójne obrażenia',
     doubleArmor: 'Podwójny pancerz',
+    bagSlots: 'Miejsca w plecaku',
 };
 
 const PERCENT_STATS = ['critChance', 'critPower', 'dodge', 'stun', 'doubleDamage', 'doubleArmor'];
@@ -56,7 +57,7 @@ export type BonusRow = {
 /** Bonus stats for the tooltip, excluding the ones already shown as base stats. */
 export function bonusRows(item: Item): BonusRow[] {
     return Object.entries(item.bonusStats ?? {})
-        .filter(([key]) => !['dmgMin', 'dmgMax', 'armor'].includes(key))
+        .filter(([key]) => !['dmgMin', 'dmgMax', 'armor', 'bagSlots'].includes(key))
         .map(([key, stat]) => {
             if (typeof stat === 'number') {
                 return { key, value: stat, name: statName(key), suffix: statSuffix(key) };

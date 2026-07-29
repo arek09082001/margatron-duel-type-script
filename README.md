@@ -82,6 +82,7 @@ src/
 │   ├── profile.ts      statystyki, poziomy, regeneracja PA
 │   ├── battle.ts       auto-walka (expowiska, arena, mocni przeciwnicy)
 │   ├── items.ts        losowanie dropów i generowanie przedmiotów
+│   ├── bags.ts         pojemność plecaka (baza + założona torba)
 │   ├── inventory.ts    ekwipunek, zakładanie, sprzedaż, mikstury
 │   ├── rest.ts         odpoczynek w karczmie
 │   ├── state.ts        snapshot dla UI, mapa świata, sklep z PA
@@ -111,6 +112,17 @@ Efekt jest ten sam co wcześniej: **PA odnawiają się także wtedy, gdy karta j
 zamknięta**. Nie potrzeba do tego workera ani websocketu — wystarczy jeden
 interwał w `useGameClock()` plus przeliczenie przy wejściu i po powrocie
 do karty.
+
+## Torby
+
+Obok broni, zbroi i talizmanu jest czwarty slot: **torba**. Założona torba
+poszerza plecak — bazowo 15 miejsc, maksymalnie 30. Torby są do kupienia
+w każdym sklepie i wypadają z potworów (najrzadszy typ dropu, a większe modele
+odblokowuje dopiero poziom przeciwnika).
+
+Zmiana torby na mniejszą albo jej zdjęcie jest **odrzucane**, jeśli w polach
+poza nowym rozmiarem leżą jeszcze przedmioty — nic nie ginie po cichu, gra
+prosi o zrobienie miejsca.
 
 ## Konta i zapis
 

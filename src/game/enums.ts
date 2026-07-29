@@ -11,13 +11,29 @@ import type {
     PlayerAttributeKey,
 } from './types';
 
-export const ITEM_TYPES: ItemTypeValue[] = ['weapon', 'armor', 'talisman', 'potion'];
+export const ITEM_TYPES: ItemTypeValue[] = ['weapon', 'armor', 'talisman', 'potion', 'bag'];
 
 export const ITEM_TYPE_LABELS: Record<ItemTypeValue, string> = {
     weapon: 'Broń',
     armor: 'Zbroja',
     talisman: 'Talizman',
     potion: 'Mikstura',
+    bag: 'Torba',
+};
+
+/**
+ * How often each type comes out of a drop roll.
+ *
+ * Gear used to be picked uniformly from `ITEM_TYPES`. Bags are a lasting
+ * upgrade rather than a sidegrade — one carries you for many levels — so they
+ * are deliberately the rarest thing a monster can leave behind.
+ */
+export const ITEM_TYPE_DROP_WEIGHTS: Record<ItemTypeValue, number> = {
+    weapon: 30,
+    armor: 30,
+    talisman: 27,
+    potion: 8,
+    bag: 5,
 };
 
 export type RarityMeta = {
