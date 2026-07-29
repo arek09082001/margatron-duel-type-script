@@ -15,7 +15,7 @@ import ToughEnemyView from '@/components/game/views/ToughEnemyView';
 import WorldMapView from '@/components/game/views/WorldMapView';
 import Modal from '@/components/ui/Modal';
 import SettingsModal from '@/components/ui/SettingsModal';
-import { STAGES_PER_LOCATION } from '@/game/config';
+import { EXPEDITION_FIGHTS, STAGES_PER_LOCATION } from '@/game/config';
 import { errorMessage } from '@/game/errors';
 import type {
     ArenaDifficultyValue,
@@ -34,9 +34,6 @@ import { useGameStore } from '@/store/gameStore';
 import { useGameClock, useIncreaseFlash, useSnapshot } from '@/store/hooks';
 
 type GameView = 'map' | 'battleSelection' | 'arena' | 'toughenemy' | 'battle' | 'shop' | 'rest' | 'worldMap';
-
-/** Fights granted per expedition into an expowisko, as in the Vue build. */
-const EXPEDITION_LENGTH = 10;
 
 const PA_OFFER_NAMES: Record<number, string> = {
     5: 'Mała butelka PA',
@@ -147,7 +144,7 @@ export default function GamePage() {
         run(() => {
             const result = store.fightStage(battleLocationId, stage.stage);
 
-            setRemainingFights((current) => (current ?? EXPEDITION_LENGTH) - 1);
+            setRemainingFights((current) => (current ?? EXPEDITION_FIGHTS) - 1);
             setLastBattleStage(stage.stage);
             setBattleResult(result);
             setView('battle');

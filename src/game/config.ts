@@ -47,6 +47,15 @@ export const PLAY_SESSION_GRACE_SECONDS = 300;
 export const MAX_BATTLE_TURNS = 100;
 export const STAGES_PER_LOCATION = 5;
 
+/**
+ * Fights granted per expedition into an expowisko before "Wyprawa zakończona"
+ * ends the run and the player has to re-enter from the map.
+ */
+export const EXPEDITION_FIGHTS = Math.max(
+    1,
+    envInt(process.env.NEXT_PUBLIC_GAME_EXPEDITION_FIGHTS, 20),
+);
+
 export function actionPointRegenerationSeconds(): number {
     return GAME_CONFIG.actionPoints.regenerationSeconds;
 }
