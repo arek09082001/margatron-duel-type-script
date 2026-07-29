@@ -8,40 +8,15 @@
  * whatever the client sends.
  */
 
-import { fightArena, fightStage, fightToughEnemy } from '@/game/battle';
+import { applyGameAction, type GameAction } from '@/game/actions';
 import { GameError } from '@/game/errors';
-import { buyItem, consumeItem, equip, sell, sellAll, unequip } from '@/game/inventory';
-import { addAttribute, createProfile, recalculate } from '@/game/profile';
-import { instantRest, startRest } from '@/game/rest';
-import { buyPa, selectMap, settleProfile } from '@/game/state';
+import { createProfile, recalculate } from '@/game/profile';
+import { settleProfile } from '@/game/state';
 import { levelRanking } from '@/game/ranking';
-import type {
-    ArenaDifficultyValue,
-    BattleResult,
-    EquipmentSlot,
-    GameProfile,
-    PlayerAttributeKey,
-    PlayerRanking,
-    ToughEnemyKind,
-} from '@/game/types';
+import type { BattleResult, GameProfile, PlayerRanking } from '@/game/types';
 import { prisma } from './prisma';
 import { profileToRow, rowToProfile } from './profileMapper';
-
-export type GameAction =
-    | { type: 'addAttribute'; attribute: PlayerAttributeKey }
-    | { type: 'selectMap'; mapId: number }
-    | { type: 'rest'; minutes: number }
-    | { type: 'instantRest' }
-    | { type: 'buyPa'; amount: number }
-    | { type: 'buyItem'; shopId: string; itemId: string | number }
-    | { type: 'equipItem'; index: number }
-    | { type: 'unequipItem'; slot: EquipmentSlot }
-    | { type: 'sellItem'; index: number }
-    | { type: 'sellAllItems' }
-    | { type: 'usePotion'; index: number }
-    | { type: 'fightStage'; locationId: string; stage: number }
-    | { type: 'fightArena'; difficulty: ArenaDifficultyValue }
-    | { type: 'fightTough'; locationId: string; enemyType: ToughEnemyKind };
+import type { SessionPlayer } from './session';
 
 /**
  * The client gets the profile, not a snapshot: it derives the snapshot with
@@ -50,10 +25,13 @@ export type GameAction =
  */
 export type ActionResult = {
     profile: GameProfile;
-    battle?: BattleResult;
+    /** One entry per submitted action; null for actions with no battle. */
+    battles: Array<BattleResult | null>;
+    /** Index of the first action that failed, if any. Earlier ones still applied. */
+    failedIndex?: number;
+    /** Why that action failed, for the alert modal. */
+    message?: string;
 };
-
-import type { SessionPlayer } from './session';
 
 export async function loadProfile(userId: string): Promise<GameProfile | null> {
     const row = await prisma.gameProfile.findUnique({ where: { id: userId } });
@@ -118,66 +96,49 @@ async function uniqueNick(preferred: string): Promise<string> {
     throw new GameError('Nie udało się nadać unikalnego nicku.');
 }
 
-function apply(profile: GameProfile, action: GameAction, now: number): BattleResult | undefined {
-    switch (action.type) {
-        case 'addAttribute':
-            addAttribute(profile, action.attribute);
-            return;
-        case 'selectMap':
-            selectMap(profile, action.mapId);
-            return;
-        case 'rest':
-            startRest(profile, action.minutes, now);
-            return;
-        case 'instantRest':
-            instantRest(profile, now);
-            return;
-        case 'buyPa':
-            buyPa(profile, action.amount, now);
-            return;
-        case 'buyItem':
-            buyItem(profile, action.shopId, action.itemId);
-            return;
-        case 'equipItem':
-            equip(profile, action.index);
-            return;
-        case 'unequipItem':
-            unequip(profile, action.slot);
-            return;
-        case 'sellItem':
-            sell(profile, action.index);
-            return;
-        case 'sellAllItems':
-            sellAll(profile);
-            return;
-        case 'usePotion':
-            consumeItem(profile, action.index, now);
-            return;
-        case 'fightStage':
-            return fightStage(profile, action.locationId, action.stage, now);
-        case 'fightArena':
-            return fightArena(profile, action.difficulty, now);
-        case 'fightTough':
-            return fightToughEnemy(profile, action.locationId, action.enemyType, now);
-    }
-}
-
 /**
- * Runs one action. The profile is settled against the wall clock first, so
- * regenerated action points and finished rests are accounted for exactly as
- * the queue workers used to do.
+ * Runs a batch of actions in order.
+ *
+ * The client applies deterministic actions optimistically and flushes them
+ * together — often alongside a battle — so a handful of clicks costs one
+ * request instead of one each.
+ *
+ * A failing action stops the batch rather than aborting it: everything before
+ * it was legal and the player already saw it applied. The returned profile is
+ * the state after the last successful action, and `failedIndex` tells the
+ * client how far to trust its optimistic copy.
  */
-export async function runAction(player: SessionPlayer, action: GameAction): Promise<ActionResult> {
+export async function runActions(
+    player: SessionPlayer,
+    actions: GameAction[],
+): Promise<ActionResult> {
     const profile = await getOrCreateProfile(player);
     const now = Date.now();
 
     settleProfile(profile, now);
-    const battle = apply(profile, action, now);
-    recalculate(profile);
 
+    const battles: Array<BattleResult | null> = [];
+    let failedIndex: number | undefined;
+    let message: string | undefined;
+
+    for (const [index, action] of actions.entries()) {
+        try {
+            battles.push(applyGameAction(profile, action, now) ?? null);
+        } catch (error) {
+            if (!(error instanceof GameError)) {
+                throw error;
+            }
+
+            failedIndex = index;
+            message = error.message;
+            break;
+        }
+    }
+
+    recalculate(profile);
     await saveProfile(profile);
 
-    return { profile, battle };
+    return { profile, battles, failedIndex, message };
 }
 
 /** Settles and persists without applying an action — used by the initial load. */

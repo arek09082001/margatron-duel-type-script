@@ -1,16 +1,22 @@
 import { NextResponse } from 'next/server';
 
-import { errorMessage, isGameError } from '@/game/errors';
-import { runAction, type GameAction } from '@/server/profileService';
+import type { GameAction } from '@/game/actions';
+import { isGameError } from '@/game/errors';
+import { runActions } from '@/server/profileService';
 import { currentPlayer } from '@/server/session';
 
 export const dynamic = 'force-dynamic';
 
+/** Bounds a single request so a runaway client cannot pin a serverless function. */
+const MAX_ACTIONS_PER_REQUEST = 50;
+
 /**
- * Applies one player action server-side.
+ * Applies a batch of player actions server-side.
  *
- * The client sends the intent, never the resulting state — so edited
- * localStorage cannot hand anyone 10 000 gold any more.
+ * The client sends intents, never resulting state, so edited local storage
+ * cannot hand anyone gold. Deterministic actions are applied optimistically in
+ * the browser and flushed here in bulk — usually riding along with the battle
+ * that triggered the flush, which keeps a burst of clicks to one request.
  */
 export async function POST(request: Request) {
     const player = await currentPlayer();
@@ -19,29 +25,38 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: 'Nie jesteś zalogowany.' }, { status: 401 });
     }
 
-    let action: GameAction;
+    let body: { actions?: GameAction[] };
 
     try {
-        action = (await request.json()) as GameAction;
+        body = await request.json();
     } catch {
         return NextResponse.json({ message: 'Nieprawidłowe żądanie.' }, { status: 400 });
     }
 
-    if (!action || typeof action.type !== 'string') {
+    const actions = body.actions;
+
+    if (!Array.isArray(actions) || actions.length === 0) {
+        return NextResponse.json({ message: 'Brak akcji do wykonania.' }, { status: 400 });
+    }
+
+    if (actions.length > MAX_ACTIONS_PER_REQUEST) {
+        return NextResponse.json({ message: 'Zbyt wiele akcji naraz.' }, { status: 400 });
+    }
+
+    if (actions.some((action) => !action || typeof action.type !== 'string')) {
         return NextResponse.json({ message: 'Nieznana akcja.' }, { status: 400 });
     }
 
     try {
-        const result = await runAction(player, action);
-
-        return NextResponse.json(result);
+        // Rule violations are reported per action inside the result, not as a
+        // failed request — earlier actions in the batch did legitimately apply.
+        return NextResponse.json(await runActions(player, actions));
     } catch (error) {
-        // GameError is a rule the player broke ("not enough gold"), not a bug.
         if (isGameError(error)) {
-            return NextResponse.json({ message: errorMessage(error) }, { status: 422 });
+            return NextResponse.json({ message: error.message }, { status: 422 });
         }
 
-        console.error('[api/game/action] failed', action.type, error);
+        console.error('[api/game/action] failed', error);
 
         return NextResponse.json({ message: 'Akcja nie powiodła się.' }, { status: 500 });
     }
