@@ -62,7 +62,7 @@ export default function GamePage() {
     const [alertMessage, setAlertMessage] = useState('');
 
     useGameClock();
-    const actionPointFlash = useIncreaseFlash(snapshot?.user.pa ?? 0);
+    const actionPointFlash = useIncreaseFlash(snapshot?.user.pa ?? null);
 
     // Locations are derived from the live snapshot rather than captured on
     // click, so stage unlocks show up immediately after a won fight.

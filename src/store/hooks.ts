@@ -93,19 +93,30 @@ export function useNow(intervalMs = 1000): number {
     return now;
 }
 
-/** Flashes for `durationMs` whenever `value` increases. */
-export function useIncreaseFlash(value: number, durationMs = 900): boolean {
+/**
+ * Flashes for `durationMs` whenever `value` increases.
+ *
+ * Pass `null` while the value is still unknown (e.g. before hydration), so the
+ * first real reading seeds the baseline instead of registering as a jump.
+ */
+export function useIncreaseFlash(value: number | null, durationMs = 900): boolean {
     const [flashing, setFlashing] = useState(false);
-    const previous = useRef(value);
+    const previous = useRef<number | null>(null);
 
     useEffect(() => {
-        if (value <= previous.current) {
-            previous.current = value;
-
+        if (value === null) {
             return;
         }
 
+        const wasSeeded = previous.current !== null;
+        const increased = wasSeeded && value > previous.current!;
+
         previous.current = value;
+
+        if (!increased) {
+            return;
+        }
+
         setFlashing(true);
 
         const timer = window.setTimeout(() => setFlashing(false), durationMs);
