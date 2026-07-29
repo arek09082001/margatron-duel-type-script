@@ -564,6 +564,93 @@ export const SHOPS: Record<string, Shop> = {
                 { hp: 40, critChance: 6, stun: 3 },
                 5000,
             ),
+
+            // Mid-game tiers around level 15/20/25.
+            //
+            // This shop serves both Torneg (level 9+) and Karka-han (level 20+),
+            // so it is the only stock a level 20-30 player can actually reach —
+            // blacksmith_3 sits in Werbin behind a level 30 gate. Its range used
+            // to stop at 18, leaving that stretch with nothing to buy.
+            shopItem(
+                405,
+                'Ostrze Zmierzchu',
+                'items/dagger.gif',
+                'weapon',
+                'unique',
+                15,
+                { dmgMin: 20, dmgMax: 34, critChance: 6 },
+                3000,
+            ),
+            shopItem(
+                423,
+                'Talizman Strażnika',
+                'items/charm.gif',
+                'talisman',
+                'heroic',
+                15,
+                { hp: 45, dodge: 4, stun: 2 },
+                2200,
+            ),
+            shopItem(
+                406,
+                'Topór Górskiego Klanu',
+                'items/axe.gif',
+                'weapon',
+                'heroic',
+                20,
+                { dmgMin: 32, dmgMax: 52, critChance: 7, critPower: 22 },
+                5500,
+            ),
+            shopItem(
+                414,
+                'Kirys Smoczej Straży',
+                'items/plate.gif',
+                'armor',
+                'heroic',
+                20,
+                { armor: 58, hp: 60, dodge: 5 },
+                7000,
+            ),
+            shopItem(
+                424,
+                'Pierścień Wichru',
+                'items/ring.gif',
+                'talisman',
+                'heroic',
+                20,
+                { hp: 70, critChance: 6, critPower: 20 },
+                6000,
+            ),
+            shopItem(
+                407,
+                'Halabarda Zaćmienia',
+                'items/spear.gif',
+                'weapon',
+                'legendary',
+                25,
+                { dmgMin: 55, dmgMax: 85, critChance: 9, critPower: 30, doubleDamage: 6 },
+                14000,
+            ),
+            shopItem(
+                415,
+                'Zbroja Górskiego Klanu',
+                'items/chainmail.gif',
+                'armor',
+                'heroic',
+                25,
+                { armor: 78, hp: 85, dodge: 6 },
+                13000,
+            ),
+            shopItem(
+                425,
+                'Amulet Zaćmienia',
+                'items/amulet.gif',
+                'talisman',
+                'legendary',
+                25,
+                { hp: 120, critChance: 8, critPower: 30, stun: 4 },
+                20000,
+            ),
         ],
     },
     blacksmith_3: {
@@ -600,9 +687,178 @@ export const SHOPS: Record<string, Shop> = {
                 { armor: 70, hp: 80, dodge: 7, doubleArmor: 8 },
                 18000,
             ),
+
+            // Endgame chase items. Deliberately far above the rest of the
+            // catalogue in both power and price, so they stay a long-term gold
+            // sink rather than a routine upgrade. Crit chance stays modest
+            // because `recalculate` caps it at 50%; the budget goes into
+            // damage, armour and HP, which are uncapped.
+            shopItem(
+                701,
+                'Kosa Zapomnianego Króla',
+                'items/spear.gif',
+                'weapon',
+                'legendary',
+                30,
+                { dmgMin: 90, dmgMax: 140, critChance: 10, critPower: 50, doubleDamage: 10 },
+                55000,
+            ),
+            shopItem(
+                702,
+                'Ostrze Końca Świata',
+                'items/sword.gif',
+                'weapon',
+                'legendary',
+                35,
+                { dmgMin: 140, dmgMax: 210, critChance: 12, critPower: 70, doubleDamage: 15 },
+                120000,
+            ),
+            shopItem(
+                711,
+                'Pancerz Wiecznego Świtu',
+                'items/plate.gif',
+                'armor',
+                'legendary',
+                33,
+                { armor: 120, hp: 200, dodge: 10, doubleArmor: 10 },
+                90000,
+            ),
+            shopItem(
+                721,
+                'Serce Praojców',
+                'items/amulet.gif',
+                'talisman',
+                'legendary',
+                38,
+                { hp: 300, critChance: 10, critPower: 60, stun: 8 },
+                250000,
+            ),
         ],
     },
 };
+
+/**
+ * Stock that follows the player's level.
+ *
+ * The fixed entries above are hand-tuned for a level bracket and go stale once
+ * you outgrow them. These templates instead restat and reprice themselves off
+ * the current level, so every shop always carries usable baseline gear. Stats
+ * grow slower than price, so the fixed items stay the more interesting buy.
+ */
+export type ScaledShopTemplate = {
+    id: number;
+    name: string;
+    image: string;
+    type: ItemTypeValue;
+    rarity: ItemRarityValue;
+    /** Stats at level 1. */
+    base: ItemStats;
+    /** Price at level 1. */
+    basePrice: number;
+};
+
+const SCALED_STAT_GROWTH = 0.12;
+const SCALED_PRICE_GROWTH = 0.25;
+
+export const SCALED_SHOP_TEMPLATES: ScaledShopTemplate[] = [
+    {
+        id: 901,
+        name: 'Miecz Najemnika',
+        image: 'items/sword.gif',
+        type: 'weapon',
+        rarity: 'common',
+        base: { dmgMin: 4, dmgMax: 8 },
+        basePrice: 200,
+    },
+    {
+        id: 902,
+        name: 'Zaklęta Głownia',
+        image: 'items/dagger.gif',
+        type: 'weapon',
+        rarity: 'unique',
+        base: { dmgMin: 6, dmgMax: 11, critChance: 3 },
+        basePrice: 450,
+    },
+    {
+        id: 911,
+        name: 'Kuta Zbroja',
+        image: 'items/chainmail.gif',
+        type: 'armor',
+        rarity: 'common',
+        base: { armor: 8 },
+        basePrice: 220,
+    },
+    {
+        id: 912,
+        name: 'Zbroja Wędrowca',
+        image: 'items/plate.gif',
+        type: 'armor',
+        rarity: 'unique',
+        base: { armor: 12, hp: 15, dodge: 2 },
+        basePrice: 500,
+    },
+    {
+        id: 921,
+        name: 'Amulet Wędrowca',
+        image: 'items/amulet.gif',
+        type: 'talisman',
+        rarity: 'unique',
+        base: { hp: 20, critChance: 2, critPower: 10 },
+        basePrice: 550,
+    },
+];
+
+function scaledShopItem(template: ScaledShopTemplate, playerLevel: number): Item {
+    const level = Math.max(1, playerLevel);
+    const statScale = 1 + (level - 1) * SCALED_STAT_GROWTH;
+    const priceScale = 1 + (level - 1) * SCALED_PRICE_GROWTH;
+
+    const stats: ItemStats = {};
+    for (const [key, value] of Object.entries(template.base)) {
+        stats[key as keyof ItemStats] = Math.max(1, Math.floor((value ?? 0) * statScale));
+    }
+
+    const item = shopItem(
+        template.id,
+        template.name,
+        template.image,
+        template.type,
+        template.rarity,
+        // Requirement tracks the player, so this gear is always equippable.
+        level,
+        stats,
+        Math.floor(template.basePrice * priceScale),
+    );
+
+    // Namespaced so a scaled entry can never collide with a fixed one.
+    return { ...item, id: `scaled_${template.id}` };
+}
+
+export function scaledShopItems(playerLevel: number): Item[] {
+    return SCALED_SHOP_TEMPLATES.map((template) => scaledShopItem(template, playerLevel));
+}
+
+/** Every shop with its level-scaled stock appended to the fixed catalogue. */
+export function shopsFor(playerLevel: number): Record<string, Shop> {
+    const scaled = scaledShopItems(playerLevel);
+    const shops: Record<string, Shop> = {};
+
+    for (const [shopId, shop] of Object.entries(SHOPS)) {
+        shops[shopId] = { ...shop, items: [...shop.items, ...scaled] };
+    }
+
+    return shops;
+}
+
+/**
+ * Resolves a shop the same way the snapshot does.
+ *
+ * Buying must go through this rather than `getShop`, otherwise level-scaled
+ * items would be visible in the UI but rejected as unknown at purchase time.
+ */
+export function getShopFor(playerLevel: number, shopId: string): Shop | null {
+    return shopsFor(playerLevel)[shopId] ?? null;
+}
 
 export type ItemBase = {
     name: string;

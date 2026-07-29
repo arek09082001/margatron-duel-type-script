@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import Modal from '@/components/ui/Modal';
+import { sellValue } from '@/game/inventory';
 import type { DecoratedLocation, Item, PlayerView, Shop } from '@/game/types';
 import { formatNumber, itemImage } from '@/lib/format';
 
@@ -11,6 +13,7 @@ type ShopViewProps = {
     user: PlayerView;
     onBuy: (item: Item) => void;
     onSell: (index: number) => void;
+    onSellAll: () => void;
     onShowTooltip: (item: Item | null | undefined, event: React.MouseEvent<HTMLElement>) => void;
     onHideTooltip: () => void;
     onBack: () => void;
@@ -22,16 +25,20 @@ export default function ShopView({
     user,
     onBuy,
     onSell,
+    onSellAll,
     onShowTooltip,
     onHideTooltip,
     onBack,
 }: ShopViewProps) {
     const [tab, setTab] = useState<'buy' | 'sell'>('buy');
+    const [confirmSellAll, setConfirmSellAll] = useState(false);
 
     // Keep the inventory index so selling addresses the right slot.
     const sellableItems = user.inventory
         .map((item, index) => ({ item, index }))
         .filter((entry): entry is { item: Item; index: number } => entry.item !== null);
+
+    const sellAllTotal = sellableItems.reduce((total, entry) => total + sellValue(entry.item), 0);
 
     return (
         <div className="inline-view shop-inline">
@@ -82,7 +89,9 @@ export default function ShopView({
                                     >
                                         {item.name}
                                     </span>
-                                    {(item.level ?? 1) > 1 && <span className="item-level">Poz. {item.level}</span>}
+                                    {(item.level ?? 1) > 1 && (
+                                        <span className="item-level">Poz. {item.level}</span>
+                                    )}
                                     <span className={`item-price${cantAfford ? ' no-gold' : ''}`}>
                                         💰 {item.price}
                                     </span>
@@ -93,28 +102,48 @@ export default function ShopView({
                 )}
 
                 {tab === 'sell' && (
-                    <div className="shop-items-list">
-                        {sellableItems.map(({ item, index }) => (
-                            <div
-                                key={`${item.id}-${index}`}
-                                className="shop-row"
-                                onClick={() => onSell(index)}
-                                onMouseEnter={(event) => onShowTooltip(item, event)}
-                                onMouseLeave={onHideTooltip}
-                            >
-                                <img src={itemImage(item)} alt={item.name} className="shop-item-image" />
-                                <span
-                                    className={`item-name ${item.rarityCss}`.trim()}
-                                    style={{ color: item.rarityColor }}
+                    <>
+                        <div className="shop-items-list">
+                            {sellableItems.map(({ item, index }) => (
+                                <div
+                                    key={`${item.id}-${index}`}
+                                    className="shop-row"
+                                    onClick={() => onSell(index)}
+                                    onMouseEnter={(event) => onShowTooltip(item, event)}
+                                    onMouseLeave={onHideTooltip}
                                 >
-                                    {item.name}
-                                </span>
-                                {(item.quantity ?? 1) > 1 && <span className="item-qty">x{item.quantity}</span>}
-                                <span className="item-price sell-price">💰 {Math.floor(item.price * 0.5)}</span>
-                            </div>
-                        ))}
-                        {sellableItems.length === 0 && <div className="empty-message">Plecak jest pusty</div>}
-                    </div>
+                                    <img src={itemImage(item)} alt={item.name} className="shop-item-image" />
+                                    <span
+                                        className={`item-name ${item.rarityCss}`.trim()}
+                                        style={{ color: item.rarityColor }}
+                                    >
+                                        {item.name}
+                                    </span>
+                                    {(item.quantity ?? 1) > 1 && (
+                                        <span className="item-qty">x{item.quantity}</span>
+                                    )}
+                                    <span className="item-price sell-price">
+                                        💰 {Math.floor(item.price * 0.5)}
+                                    </span>
+                                </div>
+                            ))}
+                            {sellableItems.length === 0 && (
+                                <div className="empty-message">Plecak jest pusty</div>
+                            )}
+                        </div>
+
+                        {/* Outside the list: it scrolls, and with a full backpack
+                            the button would sit below the fold. */}
+                        {sellableItems.length > 0 && (
+                            <button
+                                className="btn-sell-all"
+                                type="button"
+                                onClick={() => setConfirmSellAll(true)}
+                            >
+                                Sprzedaj wszystko ({sellableItems.length}) — 💰 {formatNumber(sellAllTotal)}
+                            </button>
+                        )}
+                    </>
                 )}
 
                 <div className="shop-gold-bar">
@@ -126,6 +155,32 @@ export default function ShopView({
                     ← Wyjdź ze sklepu
                 </button>
             </div>
+
+            {confirmSellAll && (
+                <Modal onClose={() => setConfirmSellAll(false)} className="settings-modal">
+                    <h2>Sprzedać wszystko?</h2>
+                    <p>
+                        Sprzedasz {sellableItems.length} przedmiot(ów) za{' '}
+                        <strong>{formatNumber(sellAllTotal)}</strong> złota. Tej operacji nie da się cofnąć.
+                    </p>
+                    <p>Założony ekwipunek zostaje nietknięty.</p>
+                    <div className="confirm-buttons">
+                        <button
+                            className="btn-close"
+                            type="button"
+                            onClick={() => {
+                                onSellAll();
+                                setConfirmSellAll(false);
+                            }}
+                        >
+                            Sprzedaj
+                        </button>
+                        <button className="btn-close" type="button" onClick={() => setConfirmSellAll(false)}>
+                            Anuluj
+                        </button>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }
