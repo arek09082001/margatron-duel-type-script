@@ -1,0 +1,31 @@
+/* Fonts are loaded via <link> in the root layout so they preconnect instead of
+   blocking behind this stylesheet. Merriweather was imported by the Laravel
+   build but never referenced by any rule, so it is no longer fetched. */
+@import '../styles/legacy-home.css';
+@import '../styles/legacy-game.css';
+@import '../styles/tips.css';
+
+html,
+body,
+#app {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: url('/game-assets/mainback.jpg') center;
+    color: #ddd;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.loading-screen {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    font-family: 'Mate SC', Georgia, serif;
+    font-size: 20px;
+    color: #f5d28f;
+    text-shadow: 0 2px 6px #000;
+}

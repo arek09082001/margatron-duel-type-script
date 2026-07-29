@@ -1,26 +1,24 @@
 {
     "compilerOptions": {
-        "allowJs": false,
-        "allowSyntheticDefaultImports": true,
-        "baseUrl": ".",
-        "composite": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "ignoreDeprecations": "6.0",
-        "isolatedModules": true,
-        "jsx": "preserve",
+        "target": "ES2022",
         "lib": ["ES2023", "DOM", "DOM.Iterable"],
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "noEmit": true,
-        "paths": {
-            "@/*": ["resources/js/*"]
-        },
-        "resolveJsonModule": true,
+        "allowJs": false,
         "skipLibCheck": true,
         "strict": true,
-        "target": "ES2023",
-        "types": ["vite/client", "node"]
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "forceConsistentCasingInFileNames": true,
+        "plugins": [{ "name": "next" }],
+        "paths": {
+            "@/*": ["./src/*"]
+        }
     },
-    "include": ["resources/js/**/*.ts", "resources/js/**/*.vue"]
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+    "exclude": ["node_modules"]
 }
