@@ -1,33 +1,12 @@
 import { NextResponse } from 'next/server';
 
-import { INVENTORY_SIZE } from '@/game/config';
 import { recalculate } from '@/game/profile';
 import { settleProfile } from '@/game/state';
-import type { GameProfile } from '@/game/types';
 import { getOrCreateProfile, loadProfile } from '@/server/profileService';
+import { isPlausibleProfile } from '@/server/profileValidation';
 import { currentPlayer } from '@/server/session';
 
 export const dynamic = 'force-dynamic';
-
-/** Guards against a malformed or hostile payload before it becomes a profile. */
-function isPlausibleProfile(value: unknown): value is GameProfile {
-    if (!value || typeof value !== 'object') {
-        return false;
-    }
-
-    const p = value as Partial<GameProfile>;
-
-    return (
-        typeof p.level === 'number' &&
-        typeof p.exp === 'number' &&
-        typeof p.gold === 'number' &&
-        typeof p.vitality === 'number' &&
-        Array.isArray(p.inventory) &&
-        p.inventory.length <= INVENTORY_SIZE &&
-        typeof p.equipped === 'object' &&
-        p.equipped !== null
-    );
-}
 
 /**
  * One-time migration of a character played before Supabase existed.

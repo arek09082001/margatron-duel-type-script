@@ -1,25 +1,25 @@
 'use client';
 
 /**
- * Client-side game store.
+ * Client-side game store — the browser holds the authoritative game state.
  *
- * The server owns the game state, but waiting for a round trip on every click
- * made the game feel sluggish. So actions take two paths:
+ * Every action, battles included, is applied here against the pure domain
+ * functions and rendered immediately, so fighting has no round trip at all.
+ * The resulting profile is pushed to the server when the player leaves a
+ * fight, hides the tab, or after a short idle.
  *
- * - **Deterministic** ones (equip, sell, buy, attributes, rest…) are applied
- *   locally at once against the same pure domain functions the server runs,
- *   then queued. The UI updates instantly and the queue is flushed in one
- *   request shortly after.
- * - **Battles** roll dice, so a local simulation would disagree with the
- *   server's. They go straight out — but carry any queued actions with them,
- *   so a burst of clicks followed by a fight is still a single request.
+ * That means the server trusts this payload: anyone can edit their own save.
+ * It is a deliberate trade for a single-player game — a battle rolls dice, so
+ * the server could not reproduce a locally-simulated fight anyway without
+ * either replaying it (different numbers) or being handed the seed.
  *
- * The server's profile always wins on reconcile.
+ * The one invariant still enforced server-side is the revision check, which
+ * keeps a stale tab from overwriting newer progress from another device.
  */
 
 import { create } from 'zustand';
 
-import { applyGameAction, isDeterministic, type GameAction } from '@/game/actions';
+import { applyGameAction, type GameAction } from '@/game/actions';
 import { GameError } from '@/game/errors';
 import { settleProfile } from '@/game/state';
 import type {
@@ -33,16 +33,17 @@ import type {
 } from '@/game/types';
 import { readLegacyLocalProfile, clearLegacyLocalProfile } from './legacyLocalSave';
 
-/** How long a queued batch waits for more actions before going out. */
-const FLUSH_DELAY_MS = 600;
-/** Flush early rather than let a long burst drift far from the server. */
-const MAX_PENDING = 20;
+/**
+ * Idle delay before an unsaved profile is pushed.
+ *
+ * Long enough that a chain of fights is one request, short enough that a
+ * crashed tab loses little. Leaving a fight flushes immediately anyway.
+ */
+const FLUSH_DELAY_MS = 4000;
 
-type ActionResponse = {
+type SyncResponse = {
     profile: GameProfile;
-    battles: Array<BattleResult | null>;
-    failedIndex?: number;
-    message?: string;
+    revision: string;
 };
 
 type GameStore = {
@@ -50,10 +51,10 @@ type GameStore = {
     ranking: PlayerRanking | null;
     /** False until the first `/api/game` load settles, so screens can wait. */
     loaded: boolean;
-    /** True while a battle is in flight — deterministic actions never block. */
+    /** Kept for compatibility with screens that disable controls; nothing blocks now. */
     busy: boolean;
-    /** Number of actions applied locally but not yet confirmed by the server. */
-    pendingCount: number;
+    /** True while local progress has not reached the server yet. */
+    unsaved: boolean;
     /**
      * Message from a rejected background flush.
      *
@@ -106,9 +107,10 @@ async function failure(response: Response): Promise<GameError> {
 }
 
 export const useGameStore = create<GameStore>()((set, get) => {
-    // Queue state lives outside the store: it is plumbing, not something the
-    // UI renders, and mutating it must not trigger re-renders.
-    let pending: GameAction[] = [];
+    // Sync plumbing lives outside the store: it is not rendered, and touching
+    // it must not trigger re-renders.
+    let revision: string | null = null;
+    let dirty = false;
     let flushTimer: number | undefined;
     let inFlight: Promise<void> | null = null;
 
@@ -119,65 +121,62 @@ export const useGameStore = create<GameStore>()((set, get) => {
         }
     }
 
-    async function send(actions: GameAction[]): Promise<ActionResponse> {
-        const response = await fetch('/api/game/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ actions }),
-            // Lets a flush triggered by the page closing still reach the
-            // server. Batches are far below the 64 KB keepalive limit.
-            keepalive: true,
-        });
-
-        if (!response.ok) {
-            throw await failure(response);
-        }
-
-        return (await response.json()) as ActionResponse;
+    function adopt(state: SyncResponse): void {
+        revision = state.revision;
+        dirty = false;
+        set({ profile: state.profile, unsaved: false });
     }
 
-    /**
-     * Adopts the server's profile and reports a rejected action.
-     *
-     * A rejection means the optimistic copy had drifted — usually because
-     * another device spent the gold first. Replacing the profile wholesale
-     * rolls back the failed action and everything queued behind it.
-     */
-    function reconcile(result: ActionResponse): void {
-        set({ profile: result.profile });
-
-        if (result.failedIndex !== undefined) {
-            throw new GameError(result.message ?? 'Akcja nie powiodła się.');
-        }
-    }
-
-    async function flushNow(): Promise<void> {
+    async function pushProfile(): Promise<void> {
         cancelFlushTimer();
 
-        if (pending.length === 0) {
+        const profile = get().profile;
+
+        if (!dirty || !profile || revision === null) {
             return;
         }
 
-        const batch = pending;
-        pending = [];
-        set({ pendingCount: 0 });
+        // Clear the flag first: an action landing mid-request re-marks it, so
+        // the next flush picks it up instead of the change being lost.
+        dirty = false;
+        set({ unsaved: false });
 
-        try {
-            reconcile(await send(batch));
-        } catch (error) {
-            // Put nothing back: the server's profile (or the reload below) is
-            // the truth, and replaying a rejected batch would fail again.
-            if (!(error instanceof GameError)) {
-                await get().load();
-            }
+        const response = await fetch('/api/game/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile, baseRevision: revision }),
+            // Lets a flush triggered by the page closing still get out.
+            keepalive: true,
+        });
 
-            throw error;
+        if (response.status === 409) {
+            // Another device wrote first. Its state wins — replaying ours would
+            // wipe out progress we never saw.
+            const conflict = (await response.json()) as SyncResponse & { message?: string };
+            adopt(conflict);
+
+            throw report(
+                new GameError(
+                    conflict.message ??
+                        'Postęp z innego urządzenia był nowszy — wczytano go ponownie.',
+                ),
+            );
         }
+
+        if (!response.ok) {
+            // Keep the changes and retry on the next flush rather than losing them.
+            dirty = true;
+            set({ unsaved: true });
+
+            throw report(await failure(response));
+        }
+
+        adopt((await response.json()) as SyncResponse);
     }
 
-    /** Serialises flushes so batches cannot overtake each other. */
+    /** Serialises flushes so two pushes cannot race on the same revision. */
     function flush(): Promise<void> {
-        inFlight = (inFlight ?? Promise.resolve()).then(flushNow, flushNow);
+        inFlight = (inFlight ?? Promise.resolve()).then(pushProfile, pushProfile);
 
         return inFlight;
     }
@@ -190,15 +189,33 @@ export const useGameStore = create<GameStore>()((set, get) => {
         );
     }
 
-    /** Nobody is awaiting a debounced flush, so surface its failure in state. */
+    /**
+     * Records a failure in state and hands it back to be thrown.
+     *
+     * Most flushes are fire-and-forget — a debounce timer, or a screen that
+     * moved on — so relying on a caller's catch block silently loses the
+     * reason. Reporting at the source means the player always finds out why
+     * their state changed under them.
+     */
+    function report<T extends GameError>(error: T): T {
+        set({ lastError: error.message });
+
+        return error;
+    }
+
     function reportBackgroundFailure(error: unknown): void {
         set({
-            lastError: error instanceof GameError ? error.message : 'Nie udało się zapisać akcji.',
+            lastError: error instanceof GameError ? error.message : 'Nie udało się zapisać postępu.',
         });
     }
 
-    /** Applies a deterministic action locally, then queues it. */
-    async function optimistic(action: GameAction): Promise<void> {
+    /**
+     * Applies an action locally and marks the profile unsaved.
+     *
+     * Rule violations throw here, exactly as they would on the server — the
+     * same `applyGameAction` runs in both places.
+     */
+    function apply(action: GameAction): BattleResult | undefined {
         const current = get().profile;
 
         if (!current) {
@@ -206,52 +223,32 @@ export const useGameStore = create<GameStore>()((set, get) => {
         }
 
         const draft = structuredClone(current);
+        const now = Date.now();
 
-        // Runs the same code the server will, so a rule violation surfaces
-        // here immediately and never reaches the queue.
-        settleProfile(draft, Date.now());
-        applyGameAction(draft, action, Date.now());
+        settleProfile(draft, now);
+        const battle = applyGameAction(draft, action, now);
 
-        set({ profile: draft });
-        pending = [...pending, action];
-        set({ pendingCount: pending.length });
-
-        if (pending.length >= MAX_PENDING) {
-            await flush();
-
-            return;
-        }
-
+        set({ profile: draft, unsaved: true });
+        dirty = true;
         scheduleFlush();
+
+        return battle;
     }
 
-    /** Runs a battle server-side, carrying any queued actions along with it. */
-    async function battle(action: GameAction): Promise<BattleResult> {
-        cancelFlushTimer();
-        set({ busy: true });
+    function act(action: GameAction): Promise<void> {
+        apply(action);
 
-        const batch = [...pending, action];
-        pending = [];
-        set({ pendingCount: 0 });
+        return Promise.resolve();
+    }
 
-        try {
-            const result = await send(batch);
-            reconcile(result);
+    function fight(action: GameAction): Promise<BattleResult> {
+        const battle = apply(action);
 
-            const outcome = result.battles[result.battles.length - 1];
-
-            if (!outcome) {
-                throw new GameError('Walka nie zwróciła wyniku.');
-            }
-
-            return outcome;
-        } finally {
-            set({ busy: false });
+        if (!battle) {
+            throw new GameError('Walka nie zwróciła wyniku.');
         }
-    }
 
-    function enqueue(action: GameAction): Promise<void> {
-        return isDeterministic(action) ? optimistic(action) : battle(action).then(() => undefined);
+        return Promise.resolve(battle);
     }
 
     return {
@@ -259,7 +256,7 @@ export const useGameStore = create<GameStore>()((set, get) => {
         ranking: null,
         loaded: false,
         busy: false,
-        pendingCount: 0,
+        unsaved: false,
         lastError: null,
 
         clearError: () => set({ lastError: null }),
@@ -289,12 +286,13 @@ export const useGameStore = create<GameStore>()((set, get) => {
         },
 
         logout: async () => {
-            // Don't strand unsent progress on the way out.
+            // Don't strand unsaved progress on the way out.
             await flush().catch(() => {});
-            set({ lastError: null });
             await fetch('/api/auth/logout', { method: 'POST' });
 
-            set({ profile: null, ranking: null, loaded: false });
+            revision = null;
+            dirty = false;
+            set({ profile: null, ranking: null, loaded: false, unsaved: false, lastError: null });
         },
 
         flush,
@@ -336,12 +334,15 @@ export const useGameStore = create<GameStore>()((set, get) => {
                 throw await failure(response);
             }
 
-            const { profile, ranking } = (await response.json()) as {
+            const loaded = (await response.json()) as {
                 profile: GameProfile;
+                revision: string;
                 ranking: PlayerRanking;
             };
 
-            set({ profile, ranking, loaded: true });
+            revision = loaded.revision;
+            dirty = false;
+            set({ profile: loaded.profile, ranking: loaded.ranking, loaded: true, unsaved: false });
         },
 
         tick: () => {
@@ -360,20 +361,20 @@ export const useGameStore = create<GameStore>()((set, get) => {
             set({ profile: draft });
         },
 
-        addAttribute: (attribute) => enqueue({ type: 'addAttribute', attribute }),
-        selectMap: (mapId) => enqueue({ type: 'selectMap', mapId }),
-        rest: (minutes) => enqueue({ type: 'rest', minutes }),
-        instantRest: () => enqueue({ type: 'instantRest' }),
-        buyPa: (amount) => enqueue({ type: 'buyPa', amount }),
-        buyItem: (shopId, itemId) => enqueue({ type: 'buyItem', shopId, itemId }),
-        equipItem: (index) => enqueue({ type: 'equipItem', index }),
-        unequipItem: (slot) => enqueue({ type: 'unequipItem', slot }),
-        sellItem: (index) => enqueue({ type: 'sellItem', index }),
-        sellAllItems: () => enqueue({ type: 'sellAllItems' }),
-        usePotion: (index) => enqueue({ type: 'usePotion', index }),
+        addAttribute: (attribute) => act({ type: 'addAttribute', attribute }),
+        selectMap: (mapId) => act({ type: 'selectMap', mapId }),
+        rest: (minutes) => act({ type: 'rest', minutes }),
+        instantRest: () => act({ type: 'instantRest' }),
+        buyPa: (amount) => act({ type: 'buyPa', amount }),
+        buyItem: (shopId, itemId) => act({ type: 'buyItem', shopId, itemId }),
+        equipItem: (index) => act({ type: 'equipItem', index }),
+        unequipItem: (slot) => act({ type: 'unequipItem', slot }),
+        sellItem: (index) => act({ type: 'sellItem', index }),
+        sellAllItems: () => act({ type: 'sellAllItems' }),
+        usePotion: (index) => act({ type: 'usePotion', index }),
 
-        fightStage: (locationId, stage) => battle({ type: 'fightStage', locationId, stage }),
-        fightArena: (difficulty) => battle({ type: 'fightArena', difficulty }),
-        fightTough: (locationId, enemyType) => battle({ type: 'fightTough', locationId, enemyType }),
+        fightStage: (locationId, stage) => fight({ type: 'fightStage', locationId, stage }),
+        fightArena: (difficulty) => fight({ type: 'fightArena', difficulty }),
+        fightTough: (locationId, enemyType) => fight({ type: 'fightTough', locationId, enemyType }),
     };
 });

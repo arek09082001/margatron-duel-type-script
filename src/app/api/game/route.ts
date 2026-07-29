@@ -15,10 +15,10 @@ export async function GET() {
     }
 
     try {
-        const profile = await currentProfile(player);
+        const { profile, revision } = await currentProfile(player);
         const ranking = await globalRanking(player.id);
 
-        return NextResponse.json({ profile, ranking });
+        return NextResponse.json({ profile, revision, ranking });
     } catch (error) {
         if (isGameError(error)) {
             return NextResponse.json({ message: errorMessage(error) }, { status: 422 });
