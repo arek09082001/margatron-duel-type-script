@@ -8,7 +8,7 @@
 
 import type { GameProfile } from '@/game/types';
 import type { Equipped, Item, RestTask } from '@/game/types';
-import { INVENTORY_SIZE } from '@/game/config';
+import { inventorySize } from '@/game/bags';
 
 /** The subset of the Prisma row we read. Declared structurally to avoid a hard
  *  dependency on the generated client in shared code paths. */
@@ -50,12 +50,22 @@ export type ProfileRow = {
     equipped: unknown;
 };
 
-/** Pads/truncates to exactly `INVENTORY_SIZE`, so a malformed row cannot break the grid. */
-function normalizeInventory(value: unknown): Array<Item | null> {
+/**
+ * Pads/truncates to the slot count the equipped bag allows, so a malformed row
+ * cannot break the grid.
+ *
+ * Occupied slots past that count survive: a row written before the bag was
+ * taken off would otherwise lose items on the next read. `normalizedInventory`
+ * makes the same promise in the game layer.
+ */
+function normalizeInventory(value: unknown, equipped: Equipped): Array<Item | null> {
     const raw = Array.isArray(value) ? value : [];
-    const slots = raw.slice(0, INVENTORY_SIZE).map((item) => (item ?? null) as Item | null);
+    const size = inventorySize(equipped);
+    const lastUsed = raw.reduce((last, item, index) => (item ? index : last), -1);
+    const length = Math.max(size, lastUsed + 1);
+    const slots = raw.slice(0, length).map((item) => (item ?? null) as Item | null);
 
-    while (slots.length < INVENTORY_SIZE) {
+    while (slots.length < length) {
         slots.push(null);
     }
 
@@ -69,6 +79,8 @@ function normalizeEquipped(value: unknown): Equipped {
         weapon: raw.weapon ?? null,
         armor: raw.armor ?? null,
         accessory: raw.accessory ?? null,
+        // Absent on every profile saved before bags existed.
+        bag: raw.bag ?? null,
     };
 }
 
@@ -79,6 +91,8 @@ function normalizeRecord<T>(value: unknown): Record<string, T> {
 }
 
 export function rowToProfile(row: ProfileRow): GameProfile {
+    const equipped = normalizeEquipped(row.equipped);
+
     return {
         id: row.id,
         nick: row.nick,
@@ -113,8 +127,8 @@ export function rowToProfile(row: ProfileRow): GameProfile {
         restTasks: normalizeRecord<RestTask>(row.restTasks),
         currentMapId: row.currentMapId,
         stageProgress: normalizeRecord<number>(row.stageProgress),
-        inventory: normalizeInventory(row.inventory),
-        equipped: normalizeEquipped(row.equipped),
+        inventory: normalizeInventory(row.inventory, equipped),
+        equipped,
     };
 }
 

@@ -1,7 +1,7 @@
 import type { Item, ItemTypeValue } from '@/game/types';
 
 /** Section order in the shop: the slots a player fills, then consumables. */
-const TYPE_ORDER: ItemTypeValue[] = ['weapon', 'armor', 'talisman', 'potion'];
+const TYPE_ORDER: ItemTypeValue[] = ['weapon', 'armor', 'talisman', 'bag', 'potion'];
 
 /** Plural headings — `ITEM_TYPE_LABELS` is singular and reads oddly as a header. */
 export const ITEM_GROUP_LABELS: Record<ItemTypeValue, string> = {
@@ -9,6 +9,7 @@ export const ITEM_GROUP_LABELS: Record<ItemTypeValue, string> = {
     armor: 'Zbroje',
     talisman: 'Talizmany',
     potion: 'Mikstury',
+    bag: 'Torby',
 };
 
 export type ItemGroup<T> = {

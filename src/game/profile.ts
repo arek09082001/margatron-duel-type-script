@@ -7,6 +7,7 @@
  * "battle → apply victory → level up → recalculate" readable.
  */
 
+import { inventorySize } from './bags';
 import {
     ACTION_POINTS_PER_LEVEL,
     INVENTORY_SIZE,
@@ -67,7 +68,7 @@ export function createProfile(id: string, nick: string, now: number = Date.now()
         currentMapId: 1,
         stageProgress: {},
         inventory: Array.from({ length: INVENTORY_SIZE }, () => null),
-        equipped: { weapon: null, armor: null, accessory: null },
+        equipped: { weapon: null, armor: null, accessory: null, bag: null },
     };
 }
 
@@ -278,6 +279,7 @@ export function toPlayerView(profile: GameProfile): PlayerView {
         stun: profile.stun,
         currentMapId: profile.currentMapId,
         inventory: profile.inventory,
+        inventorySize: inventorySize(profile.equipped),
         equipped: profile.equipped,
     };
 }

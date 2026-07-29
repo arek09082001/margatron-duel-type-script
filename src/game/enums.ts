@@ -11,13 +11,29 @@ import type {
     PlayerAttributeKey,
 } from './types';
 
-export const ITEM_TYPES: ItemTypeValue[] = ['weapon', 'armor', 'talisman', 'potion'];
+export const ITEM_TYPES: ItemTypeValue[] = ['weapon', 'armor', 'talisman', 'potion', 'bag'];
 
 export const ITEM_TYPE_LABELS: Record<ItemTypeValue, string> = {
     weapon: 'Broń',
     armor: 'Zbroja',
     talisman: 'Talizman',
     potion: 'Mikstura',
+    bag: 'Torba',
+};
+
+/**
+ * How often each type comes out of a drop roll.
+ *
+ * Gear used to be picked uniformly from `ITEM_TYPES`. Bags are a lasting
+ * upgrade rather than a sidegrade — one carries you for many levels — so they
+ * are deliberately the rarest thing a monster can leave behind.
+ */
+export const ITEM_TYPE_DROP_WEIGHTS: Record<ItemTypeValue, number> = {
+    weapon: 30,
+    armor: 30,
+    talisman: 27,
+    potion: 8,
+    bag: 5,
 };
 
 export type RarityMeta = {
@@ -112,6 +128,14 @@ export const MAP_META: Record<number, MapMeta> = {
         requiredLevel: 20,
     },
     4: { id: 4, name: 'Werbin', image: 'maps/werbin.png', levelMin: 31, levelMax: 40, requiredLevel: 30 },
+    // Late game. Same shape as the first four: ten levels per land, the gate
+    // sitting on the previous land's last level.
+    5: { id: 5, name: 'Eaquia', image: 'maps/eaquia.png', levelMin: 41, levelMax: 50, requiredLevel: 40 },
+    6: { id: 6, name: 'Nithal', image: 'maps/nithal.png', levelMin: 51, levelMax: 60, requiredLevel: 50 },
+    7: { id: 7, name: 'Tuzmer', image: 'maps/tuzmer.png', levelMin: 61, levelMax: 70, requiredLevel: 60 },
+    8: { id: 8, name: 'Thuzal', image: 'maps/thuzal.png', levelMin: 71, levelMax: 80, requiredLevel: 70 },
+    9: { id: 9, name: 'Hilaia', image: 'maps/hilaia.png', levelMin: 81, levelMax: 90, requiredLevel: 80 },
+    10: { id: 10, name: 'Elizja', image: 'maps/elizja.png', levelMin: 91, levelMax: 100, requiredLevel: 90 },
 };
 
 export type AchievementMetric =

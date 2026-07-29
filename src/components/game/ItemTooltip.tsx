@@ -2,6 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
+import { bagSlots } from '@/game/bags';
 import type { Item } from '@/game/types';
 import { bonusRows } from '@/lib/format';
 
@@ -72,6 +73,7 @@ export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }
     }
 
     const item = anchor.item;
+    const slots = bagSlots(item);
 
     return (
         <div
@@ -95,6 +97,7 @@ export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }
                     </i>
                 )}
                 {item.armor !== undefined && <i className="idesc">Pancerz: {item.armor}</i>}
+                {slots > 0 && <i className="idesc">Miejsca w plecaku: +{slots}</i>}
                 {item.effect === 'pa' && <i className="idesc">Przywraca {item.effectValue} PA</i>}
                 {bonusRows(item).map((stat) => (
                     <i key={stat.key} className="idesc">
@@ -105,7 +108,8 @@ export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }
 
                 <br />
                 {(item.level ?? 1) > 1 && <i className="idesc">Wymagany poziom: {item.level}</i>}
-                {item.power > 0 && <i className="idesc">Moc przedmiotu: {item.power}</i>}
+                {/* A bag has no combat power; its slot count says everything. */}
+                {item.power > 0 && slots === 0 && <i className="idesc">Moc przedmiotu: {item.power}</i>}
                 <i className="idesc">Wartość: {item.price}</i>
             </div>
         </div>

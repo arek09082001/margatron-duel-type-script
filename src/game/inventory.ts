@@ -2,18 +2,38 @@
  * Port of `app/Game/Services/InventoryService.php`.
  */
 
+import { inventorySize } from './bags';
 import { getShopFor } from './catalog';
-import { INVENTORY_SIZE } from './config';
 import { GameError } from './errors';
 import { recalculate } from './profile';
 import { randomHex } from './rng';
-import type { EquipmentSlot, GameProfile, Item, ItemEffect } from './types';
+import type { Equipped, EquipmentSlot, GameProfile, Item, ItemEffect } from './types';
 
-/** Pads/truncates the inventory to exactly `INVENTORY_SIZE` slots. */
+/** Index of the last slot still holding something, or -1 when empty. */
+function lastUsedSlot(inventory: ReadonlyArray<Item | null>): number {
+    for (let index = inventory.length - 1; index >= 0; index--) {
+        if (inventory[index]) {
+            return index;
+        }
+    }
+
+    return -1;
+}
+
+/**
+ * Pads the inventory to the profile's current slot count.
+ *
+ * It never truncates away an occupied slot: losing a bag has to be refused by
+ * `equip`/`unequip`, not silently swallow the items that no longer fit. Slots
+ * past the current size can therefore exist for a moment, and `addItem` simply
+ * refuses to fill them.
+ */
 export function normalizedInventory(profile: GameProfile): Array<Item | null> {
-    const inventory = (profile.inventory ?? []).slice(0, INVENTORY_SIZE);
+    const raw = profile.inventory ?? [];
+    const length = Math.max(inventorySize(profile.equipped), lastUsedSlot(raw) + 1);
+    const inventory = raw.slice(0, length);
 
-    while (inventory.length < INVENTORY_SIZE) {
+    while (inventory.length < length) {
         inventory.push(null);
     }
 
@@ -22,6 +42,7 @@ export function normalizedInventory(profile: GameProfile): Array<Item | null> {
 
 export function addItem(profile: GameProfile, item: Item): boolean {
     const inventory = normalizedInventory(profile);
+    const size = inventorySize(profile.equipped);
 
     if (item.stackable === true) {
         const existingIndex = inventory.findIndex((slot) => slot?.id === item.id);
@@ -38,7 +59,7 @@ export function addItem(profile: GameProfile, item: Item): boolean {
         }
     }
 
-    const freeIndex = inventory.findIndex((slot) => slot === null);
+    const freeIndex = inventory.findIndex((slot, index) => index < size && slot === null);
 
     if (freeIndex < 0) {
         return false;
@@ -89,8 +110,30 @@ function slotForItem(item: Item): EquipmentSlot {
             return 'armor';
         case 'talisman':
             return 'accessory';
+        case 'bag':
+            return 'bag';
         default:
             throw new GameError('Tego przedmiotu nie da się założyć.');
+    }
+}
+
+/**
+ * Refuses a bag change that would leave items outside the backpack.
+ *
+ * Swapping down to a smaller bag — or taking one off entirely — shrinks the
+ * grid, and the slots that fall away may still be occupied. Dropping those
+ * items silently would be the worst possible outcome, so the change is
+ * rejected and the player is told to make room first.
+ */
+function assertNothingFallsOut(
+    inventory: ReadonlyArray<Item | null>,
+    equipped: Equipped,
+    message: string,
+): void {
+    const size = inventorySize(equipped);
+
+    if (inventory.some((slot, index) => index >= size && slot !== null)) {
+        throw new GameError(message);
     }
 }
 
@@ -106,8 +149,22 @@ export function equip(profile: GameProfile, index: number): void {
 
     // Swap: whatever was equipped drops into the slot the item came from.
     inventory[index] = profile.equipped[slot];
-    profile.equipped = { ...profile.equipped, [slot]: item };
+
+    const equipped: Equipped = { ...profile.equipped, [slot]: item };
+
+    if (slot === 'bag') {
+        assertNothingFallsOut(
+            inventory,
+            equipped,
+            'Ta torba jest za mała — najpierw zrób miejsce w plecaku.',
+        );
+    }
+
+    profile.equipped = equipped;
     profile.inventory = inventory;
+    // Re-run now that the size may have changed, so a downgrade drops the
+    // empty tail slots and an upgrade pads the new ones.
+    profile.inventory = normalizedInventory(profile);
 
     recalculate(profile);
 }
@@ -119,6 +176,14 @@ export function unequip(profile: GameProfile, slot: EquipmentSlot): void {
         throw new GameError('Ten slot ekwipunku jest pusty.');
     }
 
+    if (slot === 'bag') {
+        assertNothingFallsOut(
+            normalizedInventory(profile),
+            { ...profile.equipped, bag: null },
+            'Bez torby część przedmiotów nie zmieściłaby się w plecaku.',
+        );
+    }
+
     profile.equipped = { ...profile.equipped, [slot]: null };
 
     if (!addItem(profile, item)) {
@@ -126,6 +191,8 @@ export function unequip(profile: GameProfile, slot: EquipmentSlot): void {
 
         throw new GameError('Ekwipunek jest pełny.');
     }
+
+    profile.inventory = normalizedInventory(profile);
 
     recalculate(profile);
 }

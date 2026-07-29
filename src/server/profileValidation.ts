@@ -1,4 +1,4 @@
-import { INVENTORY_SIZE } from '@/game/config';
+import { MAX_INVENTORY_SIZE } from '@/game/config';
 import type { GameProfile } from '@/game/types';
 
 /**
@@ -38,7 +38,9 @@ export function isPlausibleProfile(value: unknown): value is GameProfile {
         return false;
     }
 
-    if (!Array.isArray(profile.inventory) || profile.inventory.length > INVENTORY_SIZE) {
+    // The ceiling rather than the base size: a bag widens the backpack, and the
+    // exact count is checked against the equipped bag in the game layer.
+    if (!Array.isArray(profile.inventory) || profile.inventory.length > MAX_INVENTORY_SIZE) {
         return false;
     }
 

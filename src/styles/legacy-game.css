@@ -89,7 +89,9 @@
   display: flex;
   flex-direction: column;
   padding: 3px;
-  overflow-y: hidden;
+  /* The biggest bag doubles the backpack grid — let the panel scroll rather
+     than cut the last rows off. */
+  overflow-y: auto;
   gap: 3px;
   color: #fff;
   font-family: 'Mate SC', serif;
@@ -233,6 +235,8 @@
   display: flex;
   justify-content: center;
   gap: 4px;
+  /* Four slots only just fit the 180px panel; wrap instead of clipping. */
+  flex-wrap: wrap;
 }
 
 .eq-slot {
@@ -251,6 +255,21 @@
 .inventory-section {
   margin-top: auto;
   padding-bottom: 5px;
+}
+
+/* A bag can double the grid, so the slot count is worth stating. */
+.inv-capacity {
+  color: #fceea7;
+  text-shadow: 1px 1px 2px #000;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-align: left;
+  padding-left: 5px;
+  margin-bottom: 2px;
+}
+
+.inv-capacity .val {
+  font-size: 0.9rem;
 }
 
 .inv-grid-classic {

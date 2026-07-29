@@ -431,11 +431,356 @@ const WERBIN: GameMapData = buildMap(4, {
     },
 });
 
+/**
+ * Late-game lands.
+ *
+ * Enemy numbers are derived rather than guessed. `scaledEnemy` multiplies every
+ * base value by `1 + (level - 1) * 0.15`, so a land ten levels on already hits
+ * ~20% harder at identical base stats — which is why these grow more gently
+ * than the ×2-per-land step between Ithan and Werbin. The targets, measured
+ * against a player wearing that land's shop gear at its last level:
+ *
+ * - the toughest enemy dies in roughly six rounds,
+ * - it needs roughly six hits to kill the player.
+ *
+ * That is the curve Karka-han draws, the healthiest of the first four lands.
+ * The weaker three enemies of each land sit at 55% / 67% / 79% of the toughest,
+ * mirroring how Werbin spaces its four.
+ *
+ * Experience is tuned to ~12 kills per level: `expForNextLevel` grows with the
+ * square of the level while the enemy multiplier grows linearly, so base
+ * experience has to rise only gently to keep levelling at a steady pace.
+ */
+const EAQUIA: GameMapData = buildMap(5, {
+    npcs: [
+        npc('eaquia-npc-1', 'Sternik Bram', 'npc240.gif', 12, 6.5, 32, 48),
+        npc('eaquia-npc-2', 'Latarnik', 'npc256.gif', 3, 8.5, 32, 48),
+        npc('eaquia-npc-3', 'Salome', 'npc108.gif', 20, 8.5, 32, 48),
+        npc('eaquia-npc-4', 'Ognisko', 'ogn_barb02.gif', 7, 13, 32, 32),
+    ],
+    locations: [
+        battle('eaquia-wrecks', 'Zatoka Wraków', '012.jpg', 2, 1.5, 4, 3, 40, 41, 45, ['thief', 'madHunter'], 3),
+        battle(
+            'eaquia-undercity',
+            'Podziemia Eaquii',
+            '019.jpg',
+            19,
+            2,
+            4,
+            3,
+            45,
+            46,
+            50,
+            ['blackKnight', 'witch'],
+            3,
+        ),
+        location('eaquia-arena', 'Arena', 'arena', '030.jpg', 20, 11, 4, 3, 3, { levelReq: 40 }),
+        location('eaquia-tough', 'Mocny przeciwnik', 'toughenemy', '013.jpg', 2, 11, 3, 3, 3),
+        location('eaquia-inn', 'Karczma Portowa', 'rest', '025.jpg', 15.5, 9, 3, 3),
+        shopLocation('eaquia-shop', 'Sklep', '001.jpg', 10.5, 2, 3, 3, 'blacksmith_4'),
+        location('eaquia-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+    ],
+    enemies: {
+        thief: enemy('Złodziej', 'zlodziej.gif', 235, 33, 51, 217, 104),
+        madHunter: enemy('Obłąkany Łowca', 'oblakanylowca2.gif', 287, 41, 62, 232, 112),
+        blackKnight: enemy('Czarny Rycerz', 'mob125.gif', 338, 48, 73, 292, 140),
+        witch: enemy('Wiedźma z Eaquii', 'mob127.gif', 428, 61, 92, 374, 180),
+    },
+    eliteEnemies: {
+        evilMage: enemy('Zły Mag', 'zlamag0.gif', 855, 33, 51, 898, 720),
+    },
+    elite2Enemies: {
+        darkMonk: enemy('Mroczny Mnich', 'mnich-zly.gif', 813, 41, 63, 1496, 1206),
+    },
+    heroEnemies: {
+        cerberus: enemy('Cerber', 'cerber.gif', 877, 41, 63, 2207, 1980),
+    },
+    arenaEnemies: {
+        easy: ['thief', 'madHunter'],
+        medium: ['blackKnight', 'madHunter'],
+        hard: ['witch', 'blackKnight'],
+    },
+});
+
+const NITHAL: GameMapData = buildMap(6, {
+    npcs: [
+        npc('nithal-npc-1', 'Kapłan Nithalu', 'npc266.gif', 11, 6.5, 32, 48),
+        npc('nithal-npc-2', 'Wiedźma Amra', 'npc85.gif', 4, 4.5, 32, 48),
+        npc('nithal-npc-3', 'Lady Clarissa', 'aryst02.gif', 19, 12.5, 32, 48),
+        npc('nithal-npc-4', 'Kotek', 'npc251.gif', 15, 5, 16, 38),
+    ],
+    locations: [
+        battle('nithal-cliff', 'Skalne Urwisko', '005.jpg', 2.5, 2, 4, 3, 50, 51, 55, ['abyssSpawn', 'darkMonk'], 3),
+        battle(
+            'nithal-temple',
+            'Świątynia Nithalu',
+            '021.jpg',
+            19,
+            2.5,
+            4,
+            3,
+            55,
+            56,
+            60,
+            ['inquisitor', 'evilMage'],
+            3,
+        ),
+        location('nithal-arena', 'Arena', 'arena', '001.jpg', 20, 10.5, 4, 3, 3, { levelReq: 50 }),
+        location('nithal-tough', 'Mocny przeciwnik', 'toughenemy', '022.jpg', 2, 11, 3, 3, 3),
+        location('nithal-inn', 'Karczma pod Świątynią', 'rest', '025.jpg', 15, 9.5, 3, 3),
+        shopLocation('nithal-shop', 'Sklep', '001.jpg', 10, 2, 3, 3, 'blacksmith_4'),
+        location('nithal-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+    ],
+    enemies: {
+        abyssSpawn: enemy('Pomiot Otchłani', 'mob124.gif', 355, 48, 73, 265, 209),
+        darkMonk: enemy('Mroczny Mnich', 'mnich-zly.gif', 433, 59, 89, 283, 223),
+        inquisitor: enemy('Karmazynowy Inkwizytor', 'mob126.gif', 510, 69, 105, 356, 281),
+        evilMage: enemy('Zły Mag', 'zlamag0.gif', 646, 88, 133, 457, 360),
+    },
+    eliteEnemies: {
+        wraith: enemy('Zjawa', 'mob128.gif', 1292, 48, 73, 1097, 1440),
+    },
+    elite2Enemies: {
+        minotaur: enemy('Minotaur', 'mob130.gif', 1227, 60, 90, 1828, 2412),
+    },
+    heroEnemies: {
+        apostate: enemy('Apostata Paladynów', 'paladynski-apostata.gif', 1324, 60, 90, 2696, 3960),
+    },
+    arenaEnemies: {
+        easy: ['abyssSpawn', 'darkMonk'],
+        medium: ['inquisitor', 'darkMonk'],
+        hard: ['evilMage', 'inquisitor'],
+    },
+});
+
+const TUZMER: GameMapData = buildMap(7, {
+    npcs: [
+        npc('tuzmer-npc-1', 'Kupiec Portowy', 'npc232.gif', 3, 5.5, 32, 48),
+        npc('tuzmer-npc-2', 'Syntia', 'npc196.gif', 18, 4.5, 32, 48),
+        npc('tuzmer-npc-3', 'Roan', 'roan.gif', 13, 11.5, 32, 48),
+        npc('tuzmer-npc-4', 'Piesek', 'pies01d.gif', 8, 12, 26, 22),
+    ],
+    locations: [
+        battle('tuzmer-port', 'Port Tuzmer', '008.jpg', 2, 2, 4, 3, 60, 61, 65, ['wraith', 'minotaur'], 3),
+        battle(
+            'tuzmer-catacombs',
+            'Katakumby Tuzmeru',
+            '018.jpg',
+            19.5,
+            2,
+            4,
+            3,
+            65,
+            66,
+            70,
+            ['cerberus', 'apostate'],
+            3,
+        ),
+        location('tuzmer-arena', 'Arena', 'arena', '030.jpg', 19.5, 10.5, 4, 3, 3, { levelReq: 60 }),
+        location('tuzmer-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 2, 10.5, 3, 3, 3),
+        location('tuzmer-inn', 'Karczma Pod Kotwicą', 'rest', '025.jpg', 15, 9, 3, 3),
+        shopLocation('tuzmer-shop', 'Sklep', '001.jpg', 10, 2.5, 3, 3, 'blacksmith_5'),
+        location('tuzmer-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+    ],
+    enemies: {
+        wraith: enemy('Zjawa', 'mob128.gif', 536, 69, 105, 313, 418),
+        minotaur: enemy('Minotaur', 'mob130.gif', 653, 85, 128, 335, 446),
+        cerberus: enemy('Cerber', 'cerber.gif', 770, 100, 151, 421, 562),
+        apostate: enemy('Apostata Paladynów', 'paladynski-apostata.gif', 975, 126, 192, 540, 720),
+    },
+    eliteEnemies: {
+        possessedPaladin: enemy('Opętany Paladyn', 'opetanypaladyn.gif', 1950, 69, 105, 1296, 2880),
+    },
+    elite2Enemies: {
+        boneLord: enemy('Władca Kości', 'bonelord.gif', 1853, 86, 130, 2160, 4824),
+    },
+    heroEnemies: {
+        blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 1999, 86, 130, 3186, 7920),
+    },
+    arenaEnemies: {
+        easy: ['wraith', 'minotaur'],
+        medium: ['cerberus', 'minotaur'],
+        hard: ['apostate', 'cerberus'],
+    },
+});
+
+const THUZAL: GameMapData = buildMap(8, {
+    npcs: [
+        npc('thuzal-npc-1', 'Strażnik Twierdzy', 'npc57.gif', 12, 4.5, 32, 48),
+        npc('thuzal-npc-2', 'Anzelm', 'npc266.gif', 3, 9.5, 32, 48),
+        npc('thuzal-npc-3', 'Irminka', 'dk-irmina.gif', 19, 6.5, 32, 48),
+        npc('thuzal-npc-4', 'Ognisko', 'ogn_barb02.gif', 8, 12, 32, 32),
+    ],
+    locations: [
+        battle(
+            'thuzal-highlands',
+            'Wyżyna Thuzalu',
+            '010.jpg',
+            2,
+            1.5,
+            4,
+            3,
+            70,
+            71,
+            75,
+            ['possessedPaladin', 'boneLord'],
+            3,
+        ),
+        battle(
+            'thuzal-fortress',
+            'Twierdza Thuzalu',
+            '023.jpg',
+            19,
+            2,
+            4,
+            3,
+            75,
+            76,
+            80,
+            ['blackDemon', 'avenger'],
+            3,
+        ),
+        location('thuzal-arena', 'Arena', 'arena', '001.jpg', 20, 11, 4, 3, 3, { levelReq: 70 }),
+        location('thuzal-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 2, 11, 3, 3, 3),
+        location('thuzal-inn', 'Karczma Warowna', 'rest', '025.jpg', 15.5, 9.5, 3, 3),
+        shopLocation('thuzal-shop', 'Sklep', '001.jpg', 10.5, 2, 3, 3, 'blacksmith_5'),
+        location('thuzal-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+    ],
+    enemies: {
+        possessedPaladin: enemy('Opętany Paladyn', 'opetanypaladyn.gif', 810, 100, 152, 361, 835),
+        boneLord: enemy('Władca Kości', 'bonelord.gif', 987, 122, 185, 386, 893),
+        blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 1163, 144, 218, 486, 1123),
+        avenger: enemy('Gnom Mściciel', 'gnom_msciciel.gif', 1472, 182, 276, 623, 1440),
+    },
+    eliteEnemies: {
+        founder: enemy('Założyciel', 'zalozyciel.gif', 2945, 100, 152, 1495, 5760),
+    },
+    elite2Enemies: {
+        blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 2798, 124, 188, 2492, 9648),
+    },
+    heroEnemies: {
+        veryEvilPatrick: enemy('Bardzo Zły Patryk', 'bardzozlypatryk.gif', 3019, 124, 188, 3676, 15840),
+    },
+    arenaEnemies: {
+        easy: ['possessedPaladin', 'boneLord'],
+        medium: ['blackDemon', 'boneLord'],
+        hard: ['avenger', 'blackDemon'],
+    },
+});
+
+const HILAIA: GameMapData = buildMap(9, {
+    npcs: [
+        npc('hilaia-npc-1', 'Lady Gipsyanne', 'aryst01.gif', 12, 7.5, 32, 48),
+        npc('hilaia-npc-2', 'Bard Grant', 'npc232.gif', 4, 4.5, 32, 48),
+        npc('hilaia-npc-3', 'Milena', 'npc239.gif', 19, 9.5, 32, 48),
+        npc('hilaia-npc-4', 'Makatara', 'npc233.gif', 7, 11.5, 32, 48),
+    ],
+    locations: [
+        battle(
+            'hilaia-burnt-fields',
+            'Spalone Pola',
+            '014.jpg',
+            2.5,
+            2,
+            4,
+            3,
+            80,
+            81,
+            85,
+            ['blackDemon', 'boneLord'],
+            3,
+        ),
+        battle(
+            'hilaia-sanctuary',
+            'Sanktuarium Hilaii',
+            '027.jpg',
+            19,
+            2.5,
+            4,
+            3,
+            85,
+            86,
+            90,
+            ['founder', 'cerberus'],
+            3,
+        ),
+        location('hilaia-arena', 'Arena', 'arena', '030.jpg', 20, 10.5, 4, 3, 3, { levelReq: 80 }),
+        location('hilaia-tough', 'Mocny przeciwnik', 'toughenemy', '028.jpg', 2, 11, 3, 3, 3),
+        location('hilaia-inn', 'Karczma Wygnańców', 'rest', '025.jpg', 15, 9, 3, 3),
+        shopLocation('hilaia-shop', 'Sklep', '001.jpg', 10, 2, 3, 3, 'blacksmith_6'),
+        location('hilaia-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+    ],
+    enemies: {
+        blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 1223, 144, 219, 409, 1670),
+        boneLord: enemy('Władca Kości', 'bonelord.gif', 1490, 175, 266, 438, 1786),
+        cerberus: enemy('Cerber', 'cerber.gif', 1757, 207, 314, 551, 2246),
+        founder: enemy('Założyciel', 'zalozyciel.gif', 2223, 262, 397, 706, 2880),
+    },
+    eliteEnemies: {
+        veryEvilPatrick: enemy('Bardzo Zły Patryk', 'bardzozlypatryk.gif', 4447, 144, 219, 1694, 11520),
+    },
+    elite2Enemies: {
+        founder: enemy('Założyciel', 'zalozyciel.gif', 4225, 178, 270, 2824, 19296),
+    },
+    heroEnemies: {
+        blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 4558, 178, 270, 4165, 31680),
+    },
+    arenaEnemies: {
+        easy: ['blackDemon', 'boneLord'],
+        medium: ['cerberus', 'boneLord'],
+        hard: ['founder', 'cerberus'],
+    },
+});
+
+const ELIZJA: GameMapData = buildMap(10, {
+    npcs: [
+        npc('elizja-npc-1', 'Strażnik Bramy', 'npc256.gif', 12, 4.5, 32, 48),
+        npc('elizja-npc-2', 'Sir Gallen', 'npc57.gif', 4, 5.5, 32, 48),
+        npc('elizja-npc-3', 'Alan', 'npc240.gif', 18, 8.5, 32, 48),
+        npc('elizja-npc-4', 'Ognisko', 'ogn_barb02.gif', 9, 12, 32, 32),
+    ],
+    locations: [
+        battle('elizja-gate', 'Brama Elizji', '031.jpg', 2, 2, 4, 3, 90, 91, 95, ['founder', 'veryEvilPatrick'], 3),
+        battle('elizja-throne', 'Tron Elizji', '033.jpg', 19, 2, 4, 3, 95, 96, 100, ['blackDemon', 'boneLord'], 3),
+        location('elizja-arena', 'Arena', 'arena', '001.jpg', 20, 11, 4, 3, 3, { levelReq: 90 }),
+        location('elizja-tough', 'Mocny przeciwnik', 'toughenemy', '034.jpg', 2, 11, 3, 3, 3),
+        location('elizja-inn', 'Karczma na Końcu Drogi', 'rest', '025.jpg', 15.5, 9, 3, 3),
+        shopLocation('elizja-shop', 'Sklep', '001.jpg', 10.5, 2.5, 3, 3, 'blacksmith_6'),
+        location('elizja-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+    ],
+    enemies: {
+        founder: enemy('Założyciel', 'zalozyciel.gif', 2124, 232, 353, 458, 3341),
+        veryEvilPatrick: enemy('Bardzo Zły Patryk', 'bardzozlypatryk.gif', 2586, 283, 429, 489, 3571),
+        blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 3050, 334, 506, 615, 4493),
+        boneLord: enemy('Władca Kości', 'bonelord.gif', 3861, 422, 641, 789, 5760),
+    },
+    eliteEnemies: {
+        boneLord: enemy('Władca Kości', 'bonelord.gif', 6715, 207, 315, 1894, 23040),
+    },
+    elite2Enemies: {
+        veryEvilPatrick: enemy('Bardzo Zły Patryk', 'bardzozlypatryk.gif', 6379, 256, 389, 3156, 38592),
+    },
+    heroEnemies: {
+        founder: enemy('Założyciel', 'zalozyciel.gif', 8948, 256, 389, 4655, 63360),
+    },
+    arenaEnemies: {
+        easy: ['founder', 'veryEvilPatrick'],
+        medium: ['blackDemon', 'veryEvilPatrick'],
+        hard: ['boneLord', 'blackDemon'],
+    },
+});
+
 export const MAPS: Record<number, GameMapData> = {
     1: ITHAN,
     2: TORNEG,
     3: KARKA_HAN,
     4: WERBIN,
+    5: EAQUIA,
+    6: NITHAL,
+    7: TUZMER,
+    8: THUZAL,
+    9: HILAIA,
+    10: ELIZJA,
 };
 
 export const WORLD_MAP_POSITIONS: Array<{ id: number; x: number; y: number }> = [
@@ -459,6 +804,36 @@ export const POTION_EFFECT_RANGES: Record<string, Record<ItemRarityValue, [numbe
         legendary: [25, 25],
     },
 };
+
+/**
+ * The two largest bags, carried by every shop from Werbin on.
+ *
+ * Shared rather than copied so the late-game shops cannot drift apart on the
+ * one item a player is guaranteed to want.
+ */
+const HIGH_TIER_BAGS: Item[] = [
+    shopItem(
+        731,
+        'Plecak Poszukiwacza',
+        'items/bag_backpack.png',
+        'bag',
+        'heroic',
+        30,
+        { bagSlots: 12 },
+        40000,
+    ),
+    // The ceiling: `MAX_BAG_SLOTS` on top of the base backpack.
+    shopItem(
+        732,
+        'Bezdenny Plecak',
+        'items/bag_backpack.png',
+        'bag',
+        'legendary',
+        38,
+        { bagSlots: 15 },
+        200000,
+    ),
+];
 
 export const SHOPS: Record<string, Shop> = {
     blacksmith_1: {
@@ -499,6 +874,21 @@ export const SHOPS: Record<string, Shop> = {
                 6,
                 { critChance: 2, hp: 15 },
                 500,
+            ),
+
+            // Bags. Priced well above gear of the same level: the backpack is
+            // the thing that limits how long a player can stay out farming, so
+            // widening it should cost a few expeditions' worth of gold.
+            shopItem(231, 'Sakiewka', 'items/bag_pouch.png', 'bag', 'common', 1, { bagSlots: 3 }, 400),
+            shopItem(
+                232,
+                'Worek podróżny',
+                'items/bag_sack.png',
+                'bag',
+                'unique',
+                6,
+                { bagSlots: 5 },
+                1600,
             ),
         ],
     },
@@ -656,6 +1046,27 @@ export const SHOPS: Record<string, Shop> = {
                 { hp: 120, critChance: 8, critPower: 30, stun: 4 },
                 20000,
             ),
+
+            shopItem(
+                431,
+                'Wzmocniony Worek',
+                'items/bag_sack.png',
+                'bag',
+                'unique',
+                12,
+                { bagSlots: 7 },
+                4500,
+            ),
+            shopItem(
+                432,
+                'Torba wędrowca',
+                'items/bag_satchel.png',
+                'bag',
+                'heroic',
+                20,
+                { bagSlots: 10 },
+                13000,
+            ),
         ],
     },
     blacksmith_3: {
@@ -738,6 +1149,218 @@ export const SHOPS: Record<string, Shop> = {
                 { hp: 300, critChance: 10, critPower: 60, stun: 8 },
                 250000,
             ),
+
+            ...HIGH_TIER_BAGS,
+        ],
+    },
+
+    // ================= Late game =================
+    //
+    // One shop per two lands, the same way `blacksmith_2` serves Torneg and
+    // Karka-han. Each carries two tiers: gear for the first land it serves and
+    // gear for the second. Stats keep the curve the earlier shops draw —
+    // weapons roughly ×1.7 per ten levels, armour ×1.7, health ×1.8 — because
+    // enemy damage rises with the level multiplier and armour plus health are
+    // the only things that answer it.
+    blacksmith_4: {
+        id: 'blacksmith_4',
+        name: 'Sklep',
+        items: [
+            shopItem(
+                801,
+                'Kosa Zmierzchu',
+                'items/spear.gif',
+                'weapon',
+                'heroic',
+                42,
+                { dmgMin: 260, dmgMax: 390, critChance: 10, critPower: 60 },
+                150000,
+            ),
+            shopItem(
+                811,
+                'Zbroja Otchłani',
+                'items/plate.gif',
+                'armor',
+                'heroic',
+                42,
+                { armor: 220, hp: 700, dodge: 10 },
+                160000,
+            ),
+            shopItem(
+                821,
+                'Amulet Otchłani',
+                'items/amulet.gif',
+                'talisman',
+                'heroic',
+                45,
+                { hp: 800, critChance: 10, critPower: 60, stun: 8 },
+                150000,
+            ),
+            shopItem(
+                802,
+                'Ostrze Nithalu',
+                'items/sword.gif',
+                'weapon',
+                'legendary',
+                52,
+                { dmgMin: 430, dmgMax: 650, critChance: 12, critPower: 70, doubleDamage: 12 },
+                500000,
+            ),
+            shopItem(
+                812,
+                'Pancerz Nithalu',
+                'items/plate.gif',
+                'armor',
+                'legendary',
+                52,
+                { armor: 360, hp: 1200, dodge: 12, doubleArmor: 12 },
+                520000,
+            ),
+            shopItem(
+                822,
+                'Runa Nithalu',
+                'items/rune.gif',
+                'talisman',
+                'legendary',
+                55,
+                { hp: 1400, critChance: 12, critPower: 70, stun: 10 },
+                500000,
+            ),
+            ...HIGH_TIER_BAGS,
+        ],
+    },
+    blacksmith_5: {
+        id: 'blacksmith_5',
+        name: 'Sklep',
+        items: [
+            shopItem(
+                901,
+                'Trójząb Tuzmeru',
+                'items/spear.gif',
+                'weapon',
+                'heroic',
+                62,
+                { dmgMin: 790, dmgMax: 1185, critChance: 12, critPower: 80 },
+                1500000,
+            ),
+            shopItem(
+                911,
+                'Kirys Tuzmeru',
+                'items/plate.gif',
+                'armor',
+                'heroic',
+                62,
+                { armor: 650, hp: 2250, dodge: 12 },
+                1600000,
+            ),
+            shopItem(
+                921,
+                'Medalion Tuzmeru',
+                'items/medal.gif',
+                'talisman',
+                'heroic',
+                65,
+                { hp: 2700, critChance: 12, critPower: 80, stun: 10 },
+                1500000,
+            ),
+            shopItem(
+                902,
+                'Młot Thuzalu',
+                'items/hammer.gif',
+                'weapon',
+                'legendary',
+                72,
+                { dmgMin: 1200, dmgMax: 1800, critChance: 14, critPower: 90, doubleDamage: 14 },
+                5000000,
+            ),
+            shopItem(
+                912,
+                'Zbroja Thuzalu',
+                'items/plate.gif',
+                'armor',
+                'legendary',
+                72,
+                { armor: 1000, hp: 3400, dodge: 14, doubleArmor: 14 },
+                5200000,
+            ),
+            shopItem(
+                922,
+                'Pierścień Thuzalu',
+                'items/ring.gif',
+                'talisman',
+                'legendary',
+                75,
+                { hp: 4000, critChance: 14, critPower: 90, stun: 12 },
+                5000000,
+            ),
+            ...HIGH_TIER_BAGS,
+        ],
+    },
+    blacksmith_6: {
+        id: 'blacksmith_6',
+        name: 'Sklep',
+        items: [
+            shopItem(
+                1001,
+                'Kosa Hilaii',
+                'items/spear.gif',
+                'weapon',
+                'heroic',
+                82,
+                { dmgMin: 2000, dmgMax: 3000, critChance: 14, critPower: 100 },
+                15000000,
+            ),
+            shopItem(
+                1011,
+                'Pancerz Hilaii',
+                'items/plate.gif',
+                'armor',
+                'heroic',
+                82,
+                { armor: 1700, hp: 5800, dodge: 14 },
+                16000000,
+            ),
+            shopItem(
+                1021,
+                'Talizman Hilaii',
+                'items/charm.gif',
+                'talisman',
+                'heroic',
+                85,
+                { hp: 6800, critChance: 14, critPower: 100, stun: 12 },
+                15000000,
+            ),
+            shopItem(
+                1002,
+                'Ostrze Elizji',
+                'items/sword.gif',
+                'weapon',
+                'legendary',
+                92,
+                { dmgMin: 3400, dmgMax: 5100, critChance: 16, critPower: 110, doubleDamage: 16 },
+                50000000,
+            ),
+            shopItem(
+                1012,
+                'Pancerz Elizji',
+                'items/plate.gif',
+                'armor',
+                'legendary',
+                92,
+                { armor: 2900, hp: 9900, dodge: 16, doubleArmor: 16 },
+                52000000,
+            ),
+            shopItem(
+                1022,
+                'Serce Elizji',
+                'items/amulet.gif',
+                'talisman',
+                'legendary',
+                95,
+                { hp: 11600, critChance: 16, critPower: 110, stun: 14 },
+                50000000,
+            ),
+            ...HIGH_TIER_BAGS,
         ],
     },
 };
@@ -871,6 +1494,15 @@ export type ItemBase = {
     dmgMin?: number;
     dmgMax?: number;
     armor?: number;
+    /** Bags only: extra backpack slots before the rarity multiplier. */
+    bagSlots?: number;
+    /**
+     * Bags only: the enemy level a drop must reach for this base to appear.
+     *
+     * Bags are permanent quality-of-life rather than a stat curve, so they are
+     * gated by level here instead of being scaled like weapons and armour.
+     */
+    minLevel?: number;
     effect?: { type: string; value: number };
 };
 
@@ -897,6 +1529,14 @@ export const ITEM_BASES: Record<ItemTypeValue, ItemBase[]> = {
         { name: 'Runa', image: 'items/rune.gif' },
     ],
     potion: [{ name: 'Butelka PA', image: 'items/pa.gif', effect: { type: 'pa', value: 5 } }],
+    // Masculine names on purpose: `RARITY_PREFIXES` only carries the masculine
+    // form, so "Mocna Sakiewka" would come out as "Mocny Sakiewka".
+    bag: [
+        { name: 'Mieszek', image: 'items/bag_pouch.png', bagSlots: 2, minLevel: 1 },
+        { name: 'Worek podróżny', image: 'items/bag_sack.png', bagSlots: 4, minLevel: 8 },
+        { name: 'Tobołek wędrowca', image: 'items/bag_satchel.png', bagSlots: 6, minLevel: 18 },
+        { name: 'Plecak', image: 'items/bag_backpack.png', bagSlots: 8, minLevel: 28 },
+    ],
 };
 
 export const RARITY_PREFIXES: Partial<Record<ItemRarityValue, string[]>> = {

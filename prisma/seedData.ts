@@ -311,6 +311,7 @@ export const SEED_PLAYERS: SeedPlayer[] = [
                     critPower: 30,
                     stun: 4,
                 },
+                bag: null,
             },
         },
     },
