@@ -3,7 +3,7 @@
  * the PA shop, and the snapshot the UI renders from.
  */
 
-import { MAPS, WORLD_MAP_POSITIONS, SHOPS, getMap, stagesForLocation } from './catalog';
+import { MAPS, WORLD_MAP_POSITIONS, getMap, shopsFor, stagesForLocation } from './catalog';
 import { STAGES_PER_LOCATION } from './config';
 import { GameError } from './errors';
 import { recalculate, recordActivity, regenerateActionPoints, toPlayerView } from './profile';
@@ -143,7 +143,7 @@ export function buildSnapshot(profile: GameProfile, now: number = Date.now()): G
         user: toPlayerView(profile),
         currentMap: withRuntimeMapData(profile, getMap(profile.currentMapId)),
         worldMaps: worldMaps(profile),
-        shops: SHOPS,
+        shops: shopsFor(profile.level),
         paOffers: paOffers(profile),
         rest: restStateFor(profile, now),
     };

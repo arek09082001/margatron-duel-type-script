@@ -14,7 +14,7 @@ import { persist } from 'zustand/middleware';
 
 import { fightArena, fightStage, fightToughEnemy } from '@/game/battle';
 import { GameError } from '@/game/errors';
-import { buyItem, consumeItem, equip, sell, unequip } from '@/game/inventory';
+import { buyItem, consumeItem, equip, sell, sellAll, unequip } from '@/game/inventory';
 import * as profileService from '@/game/profile';
 import { instantRest, startRest } from '@/game/rest';
 import { buyPa, selectMap, settleProfile } from '@/game/state';
@@ -56,6 +56,7 @@ type GameStore = PersistedState & {
     equipItem: (index: number) => void;
     unequipItem: (slot: EquipmentSlot) => void;
     sellItem: (index: number) => void;
+    sellAllItems: () => { gold: number; count: number };
     usePotion: (index: number) => void;
 
     fightStage: (locationId: string, stage: number) => BattleResult;
@@ -188,6 +189,7 @@ export const useGameStore = create<GameStore>()(
                 equipItem: (index) => mutate((profile) => equip(profile, index)),
                 unequipItem: (slot) => mutate((profile) => unequip(profile, slot)),
                 sellItem: (index) => mutate((profile) => sell(profile, index)),
+                sellAllItems: () => mutate((profile) => sellAll(profile)),
                 usePotion: (index) => mutate((profile, now) => consumeItem(profile, index, now)),
 
                 fightStage: (locationId, stage) =>

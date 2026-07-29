@@ -2,7 +2,7 @@
  * Port of `app/Game/Services/InventoryService.php`.
  */
 
-import { getShop } from './catalog';
+import { getShopFor } from './catalog';
 import { INVENTORY_SIZE } from './config';
 import { GameError } from './errors';
 import { recalculate } from './profile';
@@ -51,7 +51,7 @@ export function addItem(profile: GameProfile, item: Item): boolean {
 }
 
 export function buyItem(profile: GameProfile, shopId: string, itemId: string | number): void {
-    const shop = getShop(shopId);
+    const shop = getShopFor(profile.level, shopId);
 
     if (!shop) {
         throw new GameError('Nie znaleziono sklepu.');
@@ -130,6 +130,11 @@ export function unequip(profile: GameProfile, slot: EquipmentSlot): void {
     recalculate(profile);
 }
 
+/** Shops pay half of an item's value. Shared so "sell all" cannot drift from it. */
+export function sellValue(item: Item): number {
+    return Math.floor((item.price ?? 0) * 0.5);
+}
+
 export function sell(profile: GameProfile, index: number): number {
     const inventory = normalizedInventory(profile);
     const item = inventory[index];
@@ -138,7 +143,7 @@ export function sell(profile: GameProfile, index: number): number {
         throw new GameError('Ten slot jest pusty.');
     }
 
-    const gold = Math.floor((item.price ?? 0) * 0.5);
+    const gold = sellValue(item);
 
     inventory[index] = null;
     profile.inventory = inventory;
@@ -148,6 +153,38 @@ export function sell(profile: GameProfile, index: number): number {
 }
 
 /** Consumes a potion from the given slot. Named to avoid the `use*` hook prefix. */
+/**
+ * Sells every item in the backpack and returns the gold earned.
+ *
+ * Equipped gear is untouched — only the 15 backpack slots are cleared.
+ */
+export function sellAll(profile: GameProfile): { gold: number; count: number } {
+    const inventory = normalizedInventory(profile);
+    let gold = 0;
+    let count = 0;
+
+    for (let index = 0; index < inventory.length; index++) {
+        const item = inventory[index];
+
+        if (!item) {
+            continue;
+        }
+
+        gold += sellValue(item);
+        count++;
+        inventory[index] = null;
+    }
+
+    if (count === 0) {
+        throw new GameError('Plecak jest pusty.');
+    }
+
+    profile.inventory = inventory;
+    profile.gold += gold;
+
+    return { gold, count };
+}
+
 export function consumeItem(profile: GameProfile, index: number, now: number = Date.now()): void {
     const inventory = normalizedInventory(profile);
     const item = inventory[index];

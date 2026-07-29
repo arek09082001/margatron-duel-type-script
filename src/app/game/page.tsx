@@ -321,6 +321,7 @@ export default function GamePage() {
                             user={user}
                             onBuy={buyItem}
                             onSell={(index) => run(() => store.sellItem(index))}
+                            onSellAll={() => run(() => store.sellAllItems())}
                             onShowTooltip={tooltip.show}
                             onHideTooltip={tooltip.hide}
                             onBack={goBackToMap}
