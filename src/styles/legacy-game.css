@@ -1304,6 +1304,25 @@ b.enemy-attack { color: red; }
   font-size: 1.1rem;
 }
 
+.shop-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 12px;
+  background: linear-gradient(180deg, rgba(20, 12, 6, 0.96), rgba(12, 8, 4, 0.92));
+  border-bottom: 1px solid #8f541f;
+  color: #d8a24a;
+  font-family: 'Cinzel', serif;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shop-group + .shop-group {
+  margin-top: 8px;
+}
+
 .btn-sell-all {
   display: block;
   width: 100%;
