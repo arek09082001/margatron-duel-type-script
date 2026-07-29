@@ -113,6 +113,33 @@ zamknięta**. Nie potrzeba do tego workera ani websocketu — wystarczy jeden
 interwał w `useGameClock()` plus przeliczenie przy wejściu i po powrocie
 do karty.
 
+## Świat
+
+Dziesięć krain, każda o dziesięć poziomów wyżej niż poprzednia. Wejście
+odblokowuje się na ostatnim poziomie krainy wcześniejszej, a każda ma dwa
+expowiska po pięć etapów, arenę, mocnych przeciwników, karczmę i sklep.
+
+| # | Kraina | Poziomy | Wymagany poziom | Sklep |
+| --- | --- | --- | --- | --- |
+| 1 | Ithan | 1-10 | 1 | `blacksmith_1` |
+| 2 | Torneg | 11-20 | 9 | `blacksmith_2` |
+| 3 | Karka-han | 21-30 | 20 | `blacksmith_2` |
+| 4 | Werbin | 31-40 | 30 | `blacksmith_3` |
+| 5 | Eaquia | 41-50 | 40 | `blacksmith_4` |
+| 6 | Nithal | 51-60 | 50 | `blacksmith_4` |
+| 7 | Tuzmer | 61-70 | 60 | `blacksmith_5` |
+| 8 | Thuzal | 71-80 | 70 | `blacksmith_5` |
+| 9 | Hilaia | 81-90 | 80 | `blacksmith_6` |
+| 10 | Elizja | 91-100 | 90 | `blacksmith_6` |
+
+Statystyki przeciwników w krainach 5-10 nie są zgadywane. `scaledEnemy` mnoży
+każdą wartość bazową przez `1 + (poziom - 1) * 0,15`, więc kraina dziesięć
+poziomów dalej bije mocniej nawet przy tych samych bazach — dlatego rosną one
+łagodniej niż podwojenie na krainę z Ithan → Werbin. Cel, mierzony na graczu
+w sprzęcie ze sklepu danej krainy i na jej ostatnim poziomie: najsilniejszy
+przeciwnik ginie w około sześciu rundach i potrzebuje około sześciu ciosów, by
+zabić gracza. To krzywa Karka-hanu, najzdrowsza z pierwszych czterech krain.
+
 ## Torby
 
 Obok broni, zbroi i talizmanu jest czwarty slot: **torba**. Założona torba
