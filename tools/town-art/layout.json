@@ -1,0 +1,1109 @@
+[
+  {
+    "slug": "olszawa",
+    "name": "Olszawa",
+    "locations": [
+      {
+        "id": "badger-cave",
+        "role": "battle",
+        "name": "Jaskinia Borsuka",
+        "x": 12.5,
+        "y": 2.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "damp-ravine",
+        "role": "battle",
+        "name": "Wilgotny Jar",
+        "x": 22.0,
+        "y": 3.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 22.0,
+        "y": 12.0,
+        "w": 4,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 3.5,
+        "y": 5.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Zajazd pod Krzywą Osiką",
+        "x": 12.0,
+        "y": 10.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Kuźnia",
+        "x": 4.0,
+        "y": 11.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 15.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "elder",
+        "name": "Stary Borzywój",
+        "file": "olszawa-elder.png",
+        "x": 8.8125,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "herbalist",
+        "name": "Kalina Zielarka",
+        "file": "olszawa-herbalist.png",
+        "x": 5.9062,
+        "y": 8.0,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "woodcutter",
+        "name": "Miłosz Drwal",
+        "file": "olszawa-woodcutter.png",
+        "x": 14.1875,
+        "y": 4.8125,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "campfire",
+        "name": "Ognisko",
+        "file": "olszawa-campfire.png",
+        "x": 16.6875,
+        "y": 3.5938,
+        "width": 32,
+        "height": 32
+      },
+      {
+        "id": "dog",
+        "name": "Burek",
+        "file": "olszawa-dog.png",
+        "x": 10.0,
+        "y": 12.625,
+        "width": 26,
+        "height": 22
+      }
+    ],
+    "id": 1
+  },
+  {
+    "slug": "rudzin",
+    "name": "Rudzin",
+    "locations": [
+      {
+        "id": "quarry",
+        "role": "battle",
+        "name": "Kamieniołom",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "catacombs",
+        "role": "battle",
+        "name": "Zapadłe Katakumby",
+        "x": 22.0,
+        "y": 13.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 13.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Karczma pod Miedzianym Dzbanem",
+        "x": 17.0,
+        "y": 9.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Kuźnia",
+        "x": 8.0,
+        "y": 9.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 15.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "merchant",
+        "name": "Radomiła Kupcowa",
+        "file": "rudzin-merchant.png",
+        "x": 9.9062,
+        "y": 10.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "guard",
+        "name": "Strażnik Ziemowit",
+        "file": "rudzin-guard.png",
+        "x": 12.0938,
+        "y": 4.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "baker",
+        "name": "Piekarka Jaga",
+        "file": "rudzin-baker.png",
+        "x": 17.5,
+        "y": 11.0,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "cat",
+        "name": "Mruczek",
+        "file": "rudzin-cat.png",
+        "x": 5.6875,
+        "y": 5.8438,
+        "width": 20,
+        "height": 18
+      }
+    ],
+    "id": 2
+  },
+  {
+    "slug": "wielgrad",
+    "name": "Wielgrad",
+    "locations": [
+      {
+        "id": "flooded-docks",
+        "role": "battle",
+        "name": "Zalane Doki",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "canals",
+        "role": "battle",
+        "name": "Kanały Wielgradu",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 11.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 10.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Gospoda Rzeczna",
+        "x": 8.0,
+        "y": 12.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Zbrojownia",
+        "x": 17.0,
+        "y": 12.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "castellan",
+        "name": "Kasztelan Dobrogost",
+        "file": "wielgrad-castellan.png",
+        "x": 12.4062,
+        "y": 10.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "fisher",
+        "name": "Rybak Świerad",
+        "file": "wielgrad-fisher.png",
+        "x": 5.9062,
+        "y": 13.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "lady",
+        "name": "Lady Ludmiła",
+        "file": "wielgrad-lady.png",
+        "x": 15.6875,
+        "y": 6.5,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "lampman",
+        "name": "Latarnik Rościsław",
+        "file": "wielgrad-lampman.png",
+        "x": 18.9062,
+        "y": 13.0938,
+        "width": 32,
+        "height": 48
+      }
+    ],
+    "id": 3
+  },
+  {
+    "slug": "czarnobor",
+    "name": "Czarnobór",
+    "locations": [
+      {
+        "id": "tar-forest",
+        "role": "battle",
+        "name": "Smolna Puszcza",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "barrows",
+        "role": "battle",
+        "name": "Kurhany Czarnoboru",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "wolf-grove",
+        "role": "battle",
+        "name": "Wilcze Uroczysko",
+        "x": 22.0,
+        "y": 13.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 11.5,
+        "y": 2.5,
+        "w": 5,
+        "h": 3
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 13.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Karczma Traperów",
+        "x": 17.0,
+        "y": 6.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Skład Traperski",
+        "x": 8.0,
+        "y": 6.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 14.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "trapper",
+        "name": "Traper Wilkosz",
+        "file": "czarnobor-trapper.png",
+        "x": 10.5,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "healer",
+        "name": "Znachorka Wierzba",
+        "file": "czarnobor-healer.png",
+        "x": 13.5,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "hunter",
+        "name": "Łowczy Godzimir",
+        "file": "czarnobor-hunter.png",
+        "x": 19.5,
+        "y": 9.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "campfire",
+        "name": "Ognisko",
+        "file": "czarnobor-campfire.png",
+        "x": 12.0,
+        "y": 10.8125,
+        "width": 32,
+        "height": 32
+      },
+      {
+        "id": "dog",
+        "name": "Sfora",
+        "file": "czarnobor-dog.png",
+        "x": 15.1875,
+        "y": 10.7188,
+        "width": 26,
+        "height": 22
+      }
+    ],
+    "id": 4
+  },
+  {
+    "slug": "solwar",
+    "name": "Sołwar",
+    "locations": [
+      {
+        "id": "salt-pans",
+        "role": "battle",
+        "name": "Warzelnie Soli",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "castaway-bay",
+        "role": "battle",
+        "name": "Zatoka Rozbitków",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 11.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 10.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Gospoda pod Latarnią",
+        "x": 19.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Skład Portowy",
+        "x": 6.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "lightkeeper",
+        "name": "Latarnik Wawrzyn",
+        "file": "solwar-lightkeeper.png",
+        "x": 15.0938,
+        "y": 5.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "salter",
+        "name": "Warzelnik Solimir",
+        "file": "solwar-salter.png",
+        "x": 8.9062,
+        "y": 5.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "sailor",
+        "name": "Żeglarka Nawoja",
+        "file": "solwar-sailor.png",
+        "x": 12.0,
+        "y": 11.3125,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "cat",
+        "name": "Mgiełka",
+        "file": "solwar-cat.png",
+        "x": 17.2812,
+        "y": 12.8438,
+        "width": 20,
+        "height": 18
+      }
+    ],
+    "id": 5
+  },
+  {
+    "slug": "nihrast",
+    "name": "Nihrast",
+    "locations": [
+      {
+        "id": "basalt-stairs",
+        "role": "battle",
+        "name": "Bazaltowe Schody",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "ash-crypt",
+        "role": "battle",
+        "name": "Krypta Popiołów",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 13.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 12.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Karczma Popielna",
+        "x": 19.0,
+        "y": 6.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Kuźnia Żarowa",
+        "x": 6.0,
+        "y": 6.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "temple",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "priest",
+        "name": "Kapłan Ogniec",
+        "file": "nihrast-priest.png",
+        "x": 12.0,
+        "y": 10.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "sister",
+        "name": "Siostra Iskra",
+        "file": "nihrast-sister.png",
+        "x": 9.0938,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "smith",
+        "name": "Kowal Żarowit",
+        "file": "nihrast-smith.png",
+        "x": 5.9062,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "watch",
+        "name": "Straż Nihrastu",
+        "file": "nihrast-watch.png",
+        "x": 15.9062,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      }
+    ],
+    "id": 6
+  },
+  {
+    "slug": "zhurmat",
+    "name": "Zhurmat",
+    "locations": [
+      {
+        "id": "dunes",
+        "role": "battle",
+        "name": "Wydmy Zhurmatu",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "necropolis",
+        "role": "battle",
+        "name": "Zapomniana Nekropolia",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 13.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 12.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Karczma Karawan",
+        "x": 19.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Bazar Zhurmatu",
+        "x": 6.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "caravaneer",
+        "name": "Karawaniarz Zahed",
+        "file": "zhurmat-caravaneer.png",
+        "x": 12.0,
+        "y": 9.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "weaver",
+        "name": "Tkaczka Amira",
+        "file": "zhurmat-weaver.png",
+        "x": 6.9062,
+        "y": 10.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "waterman",
+        "name": "Studniarz Hazir",
+        "file": "zhurmat-waterman.png",
+        "x": 17.9062,
+        "y": 7.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "guard",
+        "name": "Straż Oazy",
+        "file": "zhurmat-guard.png",
+        "x": 12.0,
+        "y": 2.9062,
+        "width": 32,
+        "height": 48
+      }
+    ],
+    "id": 7
+  },
+  {
+    "slug": "grzmiel",
+    "name": "Grzmiel",
+    "locations": [
+      {
+        "id": "thunder-ridge",
+        "role": "battle",
+        "name": "Grań Piorunów",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "mine-shafts",
+        "role": "battle",
+        "name": "Sztolnie Grzmiela",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 13.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 12.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Gospoda pod Kuszą",
+        "x": 19.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Płatnerz",
+        "x": 6.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "castellan",
+        "name": "Kasztelan Grom",
+        "file": "grzmiel-castellan.png",
+        "x": 12.0,
+        "y": 10.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "armourer",
+        "name": "Płatnerz Wojmir",
+        "file": "grzmiel-armourer.png",
+        "x": 5.9062,
+        "y": 6.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "scout",
+        "name": "Zwiadowca Turoń",
+        "file": "grzmiel-scout.png",
+        "x": 18.0938,
+        "y": 6.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "watch",
+        "name": "Straż Przełęczy",
+        "file": "grzmiel-watch.png",
+        "x": 12.0,
+        "y": 2.9062,
+        "width": 32,
+        "height": 48
+      }
+    ],
+    "id": 8
+  },
+  {
+    "slug": "ismeria",
+    "name": "Ismeria",
+    "locations": [
+      {
+        "id": "ice-rifts",
+        "role": "battle",
+        "name": "Lodowe Rozpadliny",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "frozen-haven",
+        "role": "battle",
+        "name": "Zamarzła Przystań",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 12.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 11.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Karczma pod Szronem",
+        "x": 19.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Zbrojownia Wygnańców",
+        "x": 6.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "exile",
+        "name": "Zimosław Wygnaniec",
+        "file": "ismeria-exile.png",
+        "x": 12.0,
+        "y": 10.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "shaman",
+        "name": "Szamanka Wiłna",
+        "file": "ismeria-shaman.png",
+        "x": 8.9062,
+        "y": 6.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "smith",
+        "name": "Kowal Ostroga",
+        "file": "ismeria-smith.png",
+        "x": 6.0938,
+        "y": 6.6875,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "cat",
+        "name": "Śnieżek",
+        "file": "ismeria-cat.png",
+        "x": 16.2812,
+        "y": 7.8438,
+        "width": 20,
+        "height": 18
+      }
+    ],
+    "id": 9
+  },
+  {
+    "slug": "zoryan",
+    "name": "Zoryan",
+    "locations": [
+      {
+        "id": "marble-gate",
+        "role": "battle",
+        "name": "Marmurowe Wrota",
+        "x": 3.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "dawn-throne",
+        "role": "battle",
+        "name": "Tron Zorzy",
+        "x": 22.0,
+        "y": 2.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "arena",
+        "role": "arena",
+        "name": "Arena",
+        "x": 21.5,
+        "y": 13.0,
+        "w": 5,
+        "h": 4
+      },
+      {
+        "id": "tough",
+        "role": "toughenemy",
+        "name": "Mocny przeciwnik",
+        "x": 2.5,
+        "y": 12.5,
+        "w": 3,
+        "h": 3
+      },
+      {
+        "id": "inn",
+        "role": "rest",
+        "name": "Gospoda Ostatniego Świtu",
+        "x": 19.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "shop",
+        "role": "shop",
+        "name": "Skarbiec Zoryanu",
+        "x": 6.0,
+        "y": 5.5,
+        "w": 4,
+        "h": 3
+      },
+      {
+        "id": "world",
+        "role": "worldmap",
+        "name": "Mapa Świata",
+        "x": 12.5,
+        "y": 2.0,
+        "w": 3,
+        "h": 2
+      }
+    ],
+    "npcs": [
+      {
+        "id": "warden",
+        "name": "Strażniczka Jutrzenka",
+        "file": "zoryan-warden.png",
+        "x": 12.0,
+        "y": 10.9062,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "master",
+        "name": "Mistrz Wid",
+        "file": "zoryan-master.png",
+        "x": 8.9062,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "herald",
+        "name": "Herold Blask",
+        "file": "zoryan-herald.png",
+        "x": 15.3125,
+        "y": 7.0938,
+        "width": 32,
+        "height": 48
+      },
+      {
+        "id": "guard",
+        "name": "Straż Świtu",
+        "file": "zoryan-guard.png",
+        "x": 12.0,
+        "y": 2.9062,
+        "width": 32,
+        "height": 48
+      }
+    ],
+    "id": 10
+  }
+]

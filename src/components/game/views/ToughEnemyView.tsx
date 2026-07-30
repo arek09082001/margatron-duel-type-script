@@ -12,8 +12,8 @@ type ToughEnemyViewProps = {
 };
 
 export default function ToughEnemyView({ map, location, onFight, onBack }: ToughEnemyViewProps) {
-    // Not every map defines all three tiers — Karka-han has no hero, Werbin no
-    // elite, and no map has an elite 2 except Werbin. Those buttons used to
+    // Not every map defines all three tiers — Wielgrad has no hero, Czarnobór no
+    // elite, and no map has an elite 2 except Czarnobór. Those buttons used to
     // look active and then fail with an error, so they are disabled instead.
     const available: Record<ToughEnemyKind, boolean> = {
         elite: Object.keys(map.eliteEnemies).length > 0,

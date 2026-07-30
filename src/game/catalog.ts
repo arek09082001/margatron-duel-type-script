@@ -179,25 +179,48 @@ function buildMap(
     };
 }
 
-const ITHAN: GameMapData = buildMap(1, {
+const OLSZAWA: GameMapData = buildMap(1, {
     npcs: [
-        npc('ithan-npc-1', 'Makatara', 'npc233.gif', 2, 11.5, 32, 48),
-        npc('ithan-npc-2', 'Roan', 'roan.gif', 21, 10.5, 32, 48),
-        npc('ithan-npc-3', 'Bard Grant', 'npc232.gif', 3, 4.5, 32, 48),
-        npc('ithan-npc-4', 'Sir Gallen', 'npc57.gif', 13, 4.5, 32, 48),
-        npc('ithan-npc-5', 'Ognisko', 'ogn_barb02.gif', 19, 7, 32, 32),
+        npc('olszawa-elder', 'Stary Borzywój', 'olszawa-elder.png', 8.8125, 7.0938, 32, 48),
+        npc('olszawa-herbalist', 'Kalina Zielarka', 'olszawa-herbalist.png', 5.9062, 8, 32, 48),
+        npc('olszawa-woodcutter', 'Miłosz Drwal', 'olszawa-woodcutter.png', 14.1875, 4.8125, 32, 48),
+        npc('olszawa-campfire', 'Ognisko', 'olszawa-campfire.png', 16.6875, 3.5938, 32, 32),
+        npc('olszawa-dog', 'Burek', 'olszawa-dog.png', 10, 12.625, 26, 22),
     ],
     locations: [
-        battle('ithan-yss', 'Dolina Yss', '009.jpg', 21.5, 2, 5, 4, 3, 6, 10, ['wolf', 'spider']),
-        battle('ithan-hunters-cave', 'Jaskinia Łowców', '004.jpg', 11.5, 2.5, 3, 3, 1, 1, 5, [
-            'goblin',
-            'rat',
-        ]),
-        location('ithan-arena', 'Arena', 'arena', '001.jpg', 22, 11, 4, 4),
-        location('ithan-tough', 'Mocny przeciwnik', 'toughenemy', '025.jpg', 6, 4.5, 4, 3, 2),
-        location('ithan-inn', 'Karczma pod Rozbrykanym Niziołkiem', 'rest', '025.jpg', 11, 9.5, 3, 3),
-        shopLocation('ithan-shop', 'Sklep', '001.jpg', 2.5, 12.5, 3, 3, 'blacksmith_1'),
-        location('ithan-world', 'Mapa Świata', 'worldmap', '', 11.5, 14.5, 3, 3),
+        battle(
+            'olszawa-badger-cave',
+            'Jaskinia Borsuka',
+            '004.jpg',
+            12.5,
+            2.5,
+            3,
+            3,
+            1,
+            1,
+            5,
+            ['goblin', 'rat'],
+            1,
+        ),
+        battle(
+            'olszawa-damp-ravine',
+            'Wilgotny Jar',
+            '009.jpg',
+            22,
+            3.5,
+            4,
+            3,
+            3,
+            6,
+            10,
+            ['wolf', 'spider'],
+            1,
+        ),
+        location('olszawa-arena', 'Arena', 'arena', '001.jpg', 22, 12, 4, 4, 1),
+        location('olszawa-tough', 'Mocny przeciwnik', 'toughenemy', '025.jpg', 3.5, 5.5, 3, 3, 2),
+        location('olszawa-inn', 'Zajazd pod Krzywą Osiką', 'rest', '025.jpg', 12, 10.5, 4, 3, 1),
+        shopLocation('olszawa-shop', 'Kuźnia', '001.jpg', 4, 11.5, 4, 3, 'blacksmith_1'),
+        location('olszawa-world', 'Mapa Świata', 'worldmap', '', 12.5, 15, 3, 2, 1),
     ],
     enemies: {
         goblin: enemy('Gaunt', 'gaunt.gif', 15, 1, 3, 6, 0),
@@ -223,36 +246,22 @@ const ITHAN: GameMapData = buildMap(1, {
     },
 });
 
-const TORNEG: GameMapData = buildMap(2, {
+const RUDZIN: GameMapData = buildMap(2, {
     npcs: [
-        npc('torneg-npc-1', 'Syntia', 'npc196.gif', 18, 5.5, 32, 48),
-        npc('torneg-npc-2', 'Alan', 'npc240.gif', 12, 8.5, 32, 48),
-        npc('torneg-npc-3', 'Milena', 'npc239.gif', 10, 9.5, 32, 48),
-        npc('torneg-npc-4', 'Strażnik', 'npc256.gif', 13, 2.5, 32, 48),
-        npc('torneg-npc-5', 'Salome', 'npc108.gif', 1, 5.5, 32, 48),
+        npc('rudzin-merchant', 'Radomiła Kupcowa', 'rudzin-merchant.png', 9.9062, 10.9062, 32, 48),
+        npc('rudzin-guard', 'Strażnik Ziemowit', 'rudzin-guard.png', 12.0938, 4.0938, 32, 48),
+        npc('rudzin-baker', 'Piekarka Jaga', 'rudzin-baker.png', 17.5, 11, 32, 48),
+        npc('rudzin-cat', 'Mruczek', 'rudzin-cat.png', 5.6875, 5.8438, 20, 18),
     ],
     locations: [
+        battle('rudzin-quarry', 'Kamieniołom', '005.jpg', 3, 2.5, 4, 3, 9, 11, 15, ['dark_wolf', 'pelzacz'], 2),
         battle(
-            'torneg-mountain-cave',
-            'Górska Grota',
+            'rudzin-catacombs',
+            'Zapadłe Katakumby',
             '005.jpg',
-            8,
-            1,
+            22,
+            13.5,
             4,
-            2,
-            9,
-            11,
-            15,
-            ['dark_wolf', 'pelzacz'],
-            2,
-        ),
-        battle(
-            'torneg-spider-nest',
-            'Gniazdo Pająków',
-            '005.jpg',
-            23.5,
-            11.5,
-            3,
             3,
             12,
             16,
@@ -260,11 +269,11 @@ const TORNEG: GameMapData = buildMap(2, {
             ['giant_spider', 'spider_queen'],
             2,
         ),
-        location('torneg-arena', 'Arena', 'arena', '030.jpg', 15, 1.5, 4, 3, 3, { levelReq: 9 }),
-        shopLocation('torneg-syntia', 'Sklep', '001.jpg', 19, 7, 4, 4, 'blacksmith_2'),
-        location('torneg-inn', 'Karczma Umbara', 'rest', '025.jpg', 20.5, 14.5, 3, 3),
-        location('torneg-tough', 'Mocny przeciwnik', 'toughenemy', '009.jpg', 1, 9, 2, 2, 2),
-        location('torneg-world', 'Mapa Świata', 'worldmap', '', 14.5, 15, 5, 2),
+        location('rudzin-arena', 'Arena', 'arena', '030.jpg', 22, 2.5, 4, 3, 3, { levelReq: 9 }),
+        location('rudzin-tough', 'Mocny przeciwnik', 'toughenemy', '009.jpg', 2.5, 13.5, 3, 3, 2),
+        location('rudzin-inn', 'Karczma pod Miedzianym Dzbanem', 'rest', '025.jpg', 17, 9.5, 4, 3, 1),
+        shopLocation('rudzin-shop', 'Kuźnia', '001.jpg', 8, 9.5, 4, 3, 'blacksmith_2'),
+        location('rudzin-world', 'Mapa Świata', 'worldmap', '', 12.5, 15, 3, 2, 1),
     ],
     enemies: {
         dark_wolf: enemy('Mroczny Wilk', 'dark_wolf.gif', 55, 8, 14, 28, 4),
@@ -289,19 +298,20 @@ const TORNEG: GameMapData = buildMap(2, {
     },
 });
 
-const KARKA_HAN: GameMapData = buildMap(3, {
+const WIELGRAD: GameMapData = buildMap(3, {
     npcs: [
-        npc('karka-han-npc-1', 'Anzelm', 'npc266.gif', 3, 4.5, 32, 48),
-        npc('karka-han-npc-2', 'Lady Gipsyanne', 'aryst01.gif', 13, 8.5, 32, 48),
-        npc('karka-han-npc-3', 'Lady Clarissa', 'aryst02.gif', 14, 8.5, 32, 48),
+        npc('wielgrad-castellan', 'Kasztelan Dobrogost', 'wielgrad-castellan.png', 12.4062, 10.9062, 32, 48),
+        npc('wielgrad-fisher', 'Rybak Świerad', 'wielgrad-fisher.png', 5.9062, 13.0938, 32, 48),
+        npc('wielgrad-lady', 'Lady Ludmiła', 'wielgrad-lady.png', 15.6875, 6.5, 32, 48),
+        npc('wielgrad-lampman', 'Latarnik Rościsław', 'wielgrad-lampman.png', 18.9062, 13.0938, 32, 48),
     ],
     locations: [
         battle(
-            'karka-virgin-forest',
-            'Dziewicza Knieja',
+            'wielgrad-flooded-docks',
+            'Zalane Doki',
             '009.jpg',
-            8,
-            3.5,
+            3,
+            2.5,
             4,
             3,
             20,
@@ -311,12 +321,12 @@ const KARKA_HAN: GameMapData = buildMap(3, {
             2,
         ),
         battle(
-            'karka-zulu-settlement',
-            'Osada Zulusów',
+            'wielgrad-canals',
+            'Kanały Wielgradu',
             '007.jpg',
-            1.5,
-            9.5,
-            3,
+            22,
+            2.5,
+            4,
             3,
             24,
             26,
@@ -324,11 +334,11 @@ const KARKA_HAN: GameMapData = buildMap(3, {
             ['giant_spider', 'spider_queen'],
             2,
         ),
-        location('karka-arena', 'Arena', 'arena', '001.jpg', 16.5, 2.5, 5, 3, 3, { levelReq: 20 }),
-        shopLocation('karka-armorer', 'Sklep', '001.jpg', 21, 10, 4, 4, 'blacksmith_2'),
-        location('karka-inn', 'Karczma', 'rest', '025.jpg', 11, 9.5, 4, 3),
-        location('karka-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 4, 5, 2, 2, 2),
-        location('karka-world', 'Mapa Świata', 'worldmap', '', 11, 15, 4, 2),
+        location('wielgrad-arena', 'Arena', 'arena', '001.jpg', 21.5, 11, 5, 4, 3, { levelReq: 20 }),
+        location('wielgrad-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 2.5, 10.5, 3, 3, 2),
+        location('wielgrad-inn', 'Gospoda Rzeczna', 'rest', '025.jpg', 8, 12.5, 4, 3, 1),
+        shopLocation('wielgrad-shop', 'Zbrojownia', '001.jpg', 17, 12.5, 4, 3, 'blacksmith_2'),
+        location('wielgrad-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         zubr: enemy('Żubr', 'zubr.gif', 135, 21, 34, 92, 18),
@@ -336,8 +346,8 @@ const KARKA_HAN: GameMapData = buildMap(3, {
         giant_spider: enemy('Olbrzymi Pająk', 'giant_spider.gif', 150, 28, 44, 118, 26),
         // Osada Zulusów and the hard arena both roll `spider_queen`, but it was
         // only ever defined under `eliteEnemies` — so those fights threw
-        // "Nieznany przeciwnik [spider_queen]". Torneg and Werbin both list it
-        // as a normal enemy; Karka-han was the outlier.
+        // "Nieznany przeciwnik [spider_queen]". Rudzin and Czarnobór both list it
+        // as a normal enemy; Wielgrad was the outlier.
         spider_queen: enemy('Królowa Pająków', 'spider_queen.gif', 185, 34, 52, 150, 35),
     },
     eliteEnemies: {
@@ -352,23 +362,23 @@ const KARKA_HAN: GameMapData = buildMap(3, {
     },
 });
 
-const WERBIN: GameMapData = buildMap(4, {
+const CZARNOBOR: GameMapData = buildMap(4, {
     npcs: [
-        npc('werbin-npc-1', 'Wiedźma Amra', 'npc85.gif', 1, 0.5, 32, 48),
-        npc('werbin-npc-2', 'Irminka', 'dk-irmina.gif', 9, 8.5, 32, 48),
-        npc('werbin-npc-3', 'Kotek', 'npc251.gif', 9, 5 - 1 / 16, 16, 38),
-        npc('werbin-npc-4', 'Piesek', 'pies01d.gif', 13, 12 + 10 / 32, 26, 22),
-        npc('werbin-npc-5', 'Ognisko', 'ogn_barb02.gif', 22, 6, 32, 32),
+        npc('czarnobor-trapper', 'Traper Wilkosz', 'czarnobor-trapper.png', 10.5, 7.0938, 32, 48),
+        npc('czarnobor-healer', 'Znachorka Wierzba', 'czarnobor-healer.png', 13.5, 7.0938, 32, 48),
+        npc('czarnobor-hunter', 'Łowczy Godzimir', 'czarnobor-hunter.png', 19.5, 9.0938, 32, 48),
+        npc('czarnobor-campfire', 'Ognisko', 'czarnobor-campfire.png', 12, 10.8125, 32, 32),
+        npc('czarnobor-dog', 'Sfora', 'czarnobor-dog.png', 15.1875, 10.7188, 26, 22),
     ],
     locations: [
         battle(
-            'werbin-heaths',
-            'Wrzosowiska',
+            'czarnobor-tar-forest',
+            'Smolna Puszcza',
             '010.jpg',
-            18.5,
-            1,
-            5,
-            2,
+            3,
+            2.5,
+            4,
+            3,
             30,
             31,
             35,
@@ -376,12 +386,12 @@ const WERBIN: GameMapData = buildMap(4, {
             2,
         ),
         battle(
-            'werbin-goblin-forest',
-            'Las Goblinów',
+            'czarnobor-barrows',
+            'Kurhany Czarnoboru',
             '009.jpg',
-            23.5,
-            10.5,
-            3,
+            22,
+            2.5,
+            4,
             3,
             35,
             36,
@@ -390,12 +400,12 @@ const WERBIN: GameMapData = buildMap(4, {
             2,
         ),
         battle(
-            'werbin-tristam',
-            'Tristam',
+            'czarnobor-wolf-grove',
+            'Wilcze Uroczysko',
             '008.jpg',
-            1.5,
-            1.5,
-            3,
+            22,
+            13.5,
+            4,
             3,
             35,
             36,
@@ -403,11 +413,11 @@ const WERBIN: GameMapData = buildMap(4, {
             ['giant_spider', 'spider_queen'],
             2,
         ),
-        location('werbin-arena', 'Arena', 'arena', '001.jpg', 7.5, 2.5, 3, 3, 3, { levelReq: 35 }),
-        shopLocation('werbin-armorer', 'Sklep', '001.jpg', 10.5, 9.5, 3, 3, 'blacksmith_3'),
-        location('werbin-inn', 'Karczma', 'rest', '025.jpg', 17.5, 8.5, 3, 3),
-        location('werbin-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 24, 5, 2, 2, 2),
-        location('werbin-world', 'Mapa Świata', 'worldmap', '', 9.5, 15, 5, 2),
+        location('czarnobor-arena', 'Arena', 'arena', '001.jpg', 11.5, 2.5, 5, 3, 3, { levelReq: 35 }),
+        location('czarnobor-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 2.5, 13.5, 3, 3, 2),
+        location('czarnobor-inn', 'Karczma Traperów', 'rest', '025.jpg', 17, 6.5, 4, 3, 1),
+        shopLocation('czarnobor-shop', 'Skład Traperski', '001.jpg', 8, 6.5, 4, 3, 'blacksmith_3'),
+        location('czarnobor-world', 'Mapa Świata', 'worldmap', '', 12.5, 14, 3, 2, 1),
     ],
     enemies: {
         zubr: enemy('Żubr', 'zubr.gif', 220, 42, 66, 210, 48),
@@ -435,35 +445,48 @@ const WERBIN: GameMapData = buildMap(4, {
  * Enemy numbers are derived rather than guessed. `scaledEnemy` multiplies every
  * base value by `1 + (level - 1) * 0.15`, so a land ten levels on already hits
  * ~20% harder at identical base stats — which is why these grow more gently
- * than the ×2-per-land step between Ithan and Werbin. The targets, measured
+ * than the ×2-per-land step between Olszawa and Czarnobór. The targets, measured
  * against a player wearing that land's shop gear at its last level:
  *
  * - the toughest enemy dies in roughly six rounds,
  * - it needs roughly six hits to kill the player.
  *
- * That is the curve Karka-han draws, the healthiest of the first four lands.
+ * That is the curve Wielgrad draws, the healthiest of the first four lands.
  * The weaker three enemies of each land sit at 55% / 67% / 79% of the toughest,
- * mirroring how Werbin spaces its four.
+ * mirroring how Czarnobór spaces its four.
  *
  * Experience is tuned to ~12 kills per level: `expForNextLevel` grows with the
  * square of the level while the enemy multiplier grows linearly, so base
  * experience has to rise only gently to keep levelling at a steady pace.
  */
-const EAQUIA: GameMapData = buildMap(5, {
+const SOLWAR: GameMapData = buildMap(5, {
     npcs: [
-        npc('eaquia-npc-1', 'Sternik Bram', 'npc240.gif', 12, 6.5, 32, 48),
-        npc('eaquia-npc-2', 'Latarnik', 'npc256.gif', 3, 8.5, 32, 48),
-        npc('eaquia-npc-3', 'Salome', 'npc108.gif', 20, 8.5, 32, 48),
-        npc('eaquia-npc-4', 'Ognisko', 'ogn_barb02.gif', 7, 13, 32, 32),
+        npc('solwar-lightkeeper', 'Latarnik Wawrzyn', 'solwar-lightkeeper.png', 15.0938, 5.9062, 32, 48),
+        npc('solwar-salter', 'Warzelnik Solimir', 'solwar-salter.png', 8.9062, 5.9062, 32, 48),
+        npc('solwar-sailor', 'Żeglarka Nawoja', 'solwar-sailor.png', 12, 11.3125, 32, 48),
+        npc('solwar-cat', 'Mgiełka', 'solwar-cat.png', 17.2812, 12.8438, 20, 18),
     ],
     locations: [
-        battle('eaquia-wrecks', 'Zatoka Wraków', '012.jpg', 2, 1.5, 4, 3, 40, 41, 45, ['thief', 'madHunter'], 3),
         battle(
-            'eaquia-undercity',
-            'Podziemia Eaquii',
+            'solwar-salt-pans',
+            'Warzelnie Soli',
+            '012.jpg',
+            3,
+            2.5,
+            4,
+            3,
+            40,
+            41,
+            45,
+            ['thief', 'madHunter'],
+            3,
+        ),
+        battle(
+            'solwar-castaway-bay',
+            'Zatoka Rozbitków',
             '019.jpg',
-            19,
-            2,
+            22,
+            2.5,
             4,
             3,
             45,
@@ -472,17 +495,17 @@ const EAQUIA: GameMapData = buildMap(5, {
             ['blackKnight', 'witch'],
             3,
         ),
-        location('eaquia-arena', 'Arena', 'arena', '030.jpg', 20, 11, 4, 3, 3, { levelReq: 40 }),
-        location('eaquia-tough', 'Mocny przeciwnik', 'toughenemy', '013.jpg', 2, 11, 3, 3, 3),
-        location('eaquia-inn', 'Karczma Portowa', 'rest', '025.jpg', 15.5, 9, 3, 3),
-        shopLocation('eaquia-shop', 'Sklep', '001.jpg', 10.5, 2, 3, 3, 'blacksmith_4'),
-        location('eaquia-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+        location('solwar-arena', 'Arena', 'arena', '030.jpg', 21.5, 11, 5, 4, 3, { levelReq: 40 }),
+        location('solwar-tough', 'Mocny przeciwnik', 'toughenemy', '013.jpg', 2.5, 10.5, 3, 3, 3),
+        location('solwar-inn', 'Gospoda pod Latarnią', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
+        shopLocation('solwar-shop', 'Skład Portowy', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_4'),
+        location('solwar-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         thief: enemy('Złodziej', 'zlodziej.gif', 235, 33, 51, 217, 104),
         madHunter: enemy('Obłąkany Łowca', 'oblakanylowca2.gif', 287, 41, 62, 232, 112),
         blackKnight: enemy('Czarny Rycerz', 'mob125.gif', 338, 48, 73, 292, 140),
-        witch: enemy('Wiedźma z Eaquii', 'mob127.gif', 428, 61, 92, 374, 180),
+        witch: enemy('Wiedźma z Sołwaru', 'mob127.gif', 428, 61, 92, 374, 180),
     },
     eliteEnemies: {
         evilMage: enemy('Zły Mag', 'zlamag0.gif', 855, 33, 51, 898, 720),
@@ -500,20 +523,33 @@ const EAQUIA: GameMapData = buildMap(5, {
     },
 });
 
-const NITHAL: GameMapData = buildMap(6, {
+const NIHRAST: GameMapData = buildMap(6, {
     npcs: [
-        npc('nithal-npc-1', 'Kapłan Nithalu', 'npc266.gif', 11, 6.5, 32, 48),
-        npc('nithal-npc-2', 'Wiedźma Amra', 'npc85.gif', 4, 4.5, 32, 48),
-        npc('nithal-npc-3', 'Lady Clarissa', 'aryst02.gif', 19, 12.5, 32, 48),
-        npc('nithal-npc-4', 'Kotek', 'npc251.gif', 15, 5, 16, 38),
+        npc('nihrast-priest', 'Kapłan Ogniec', 'nihrast-priest.png', 12, 10.6875, 32, 48),
+        npc('nihrast-sister', 'Siostra Iskra', 'nihrast-sister.png', 9.0938, 7.0938, 32, 48),
+        npc('nihrast-smith', 'Kowal Żarowit', 'nihrast-smith.png', 5.9062, 7.0938, 32, 48),
+        npc('nihrast-watch', 'Straż Nihrastu', 'nihrast-watch.png', 15.9062, 7.0938, 32, 48),
     ],
     locations: [
-        battle('nithal-cliff', 'Skalne Urwisko', '005.jpg', 2.5, 2, 4, 3, 50, 51, 55, ['abyssSpawn', 'darkMonk'], 3),
         battle(
-            'nithal-temple',
-            'Świątynia Nithalu',
+            'nihrast-basalt-stairs',
+            'Bazaltowe Schody',
+            '005.jpg',
+            3,
+            2.5,
+            4,
+            3,
+            50,
+            51,
+            55,
+            ['abyssSpawn', 'darkMonk'],
+            3,
+        ),
+        battle(
+            'nihrast-ash-crypt',
+            'Krypta Popiołów',
             '021.jpg',
-            19,
+            22,
             2.5,
             4,
             3,
@@ -523,11 +559,11 @@ const NITHAL: GameMapData = buildMap(6, {
             ['inquisitor', 'evilMage'],
             3,
         ),
-        location('nithal-arena', 'Arena', 'arena', '001.jpg', 20, 10.5, 4, 3, 3, { levelReq: 50 }),
-        location('nithal-tough', 'Mocny przeciwnik', 'toughenemy', '022.jpg', 2, 11, 3, 3, 3),
-        location('nithal-inn', 'Karczma pod Świątynią', 'rest', '025.jpg', 15, 9.5, 3, 3),
-        shopLocation('nithal-shop', 'Sklep', '001.jpg', 10, 2, 3, 3, 'blacksmith_4'),
-        location('nithal-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+        location('nihrast-arena', 'Arena', 'arena', '001.jpg', 21.5, 13, 5, 4, 3, { levelReq: 50 }),
+        location('nihrast-tough', 'Mocny przeciwnik', 'toughenemy', '022.jpg', 2.5, 12.5, 3, 3, 3),
+        location('nihrast-inn', 'Karczma Popielna', 'rest', '025.jpg', 19, 6.5, 4, 3, 1),
+        shopLocation('nihrast-shop', 'Kuźnia Żarowa', '001.jpg', 6, 6.5, 4, 3, 'blacksmith_4'),
+        location('nihrast-temple', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         abyssSpawn: enemy('Pomiot Otchłani', 'mob124.gif', 355, 48, 73, 265, 209),
@@ -551,21 +587,34 @@ const NITHAL: GameMapData = buildMap(6, {
     },
 });
 
-const TUZMER: GameMapData = buildMap(7, {
+const ZHURMAT: GameMapData = buildMap(7, {
     npcs: [
-        npc('tuzmer-npc-1', 'Kupiec Portowy', 'npc232.gif', 3, 5.5, 32, 48),
-        npc('tuzmer-npc-2', 'Syntia', 'npc196.gif', 18, 4.5, 32, 48),
-        npc('tuzmer-npc-3', 'Roan', 'roan.gif', 13, 11.5, 32, 48),
-        npc('tuzmer-npc-4', 'Piesek', 'pies01d.gif', 8, 12, 26, 22),
+        npc('zhurmat-caravaneer', 'Karawaniarz Zahed', 'zhurmat-caravaneer.png', 12, 9.0938, 32, 48),
+        npc('zhurmat-weaver', 'Tkaczka Amira', 'zhurmat-weaver.png', 6.9062, 10.9062, 32, 48),
+        npc('zhurmat-waterman', 'Studniarz Hazir', 'zhurmat-waterman.png', 17.9062, 7.9062, 32, 48),
+        npc('zhurmat-guard', 'Straż Oazy', 'zhurmat-guard.png', 12, 2.9062, 32, 48),
     ],
     locations: [
-        battle('tuzmer-port', 'Port Tuzmer', '008.jpg', 2, 2, 4, 3, 60, 61, 65, ['wraith', 'minotaur'], 3),
         battle(
-            'tuzmer-catacombs',
-            'Katakumby Tuzmeru',
+            'zhurmat-dunes',
+            'Wydmy Zhurmatu',
+            '008.jpg',
+            3,
+            2.5,
+            4,
+            3,
+            60,
+            61,
+            65,
+            ['wraith', 'minotaur'],
+            3,
+        ),
+        battle(
+            'zhurmat-necropolis',
+            'Zapomniana Nekropolia',
             '018.jpg',
-            19.5,
-            2,
+            22,
+            2.5,
             4,
             3,
             65,
@@ -574,11 +623,11 @@ const TUZMER: GameMapData = buildMap(7, {
             ['cerberus', 'apostate'],
             3,
         ),
-        location('tuzmer-arena', 'Arena', 'arena', '030.jpg', 19.5, 10.5, 4, 3, 3, { levelReq: 60 }),
-        location('tuzmer-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 2, 10.5, 3, 3, 3),
-        location('tuzmer-inn', 'Karczma Pod Kotwicą', 'rest', '025.jpg', 15, 9, 3, 3),
-        shopLocation('tuzmer-shop', 'Sklep', '001.jpg', 10, 2.5, 3, 3, 'blacksmith_5'),
-        location('tuzmer-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+        location('zhurmat-arena', 'Arena', 'arena', '030.jpg', 21.5, 13, 5, 4, 3, { levelReq: 60 }),
+        location('zhurmat-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 2.5, 12.5, 3, 3, 3),
+        location('zhurmat-inn', 'Karczma Karawan', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
+        shopLocation('zhurmat-shop', 'Bazar Zhurmatu', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_5'),
+        location('zhurmat-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         wraith: enemy('Zjawa', 'mob128.gif', 536, 69, 105, 313, 418),
@@ -602,20 +651,20 @@ const TUZMER: GameMapData = buildMap(7, {
     },
 });
 
-const THUZAL: GameMapData = buildMap(8, {
+const GRZMIEL: GameMapData = buildMap(8, {
     npcs: [
-        npc('thuzal-npc-1', 'Strażnik Twierdzy', 'npc57.gif', 12, 4.5, 32, 48),
-        npc('thuzal-npc-2', 'Anzelm', 'npc266.gif', 3, 9.5, 32, 48),
-        npc('thuzal-npc-3', 'Irminka', 'dk-irmina.gif', 19, 6.5, 32, 48),
-        npc('thuzal-npc-4', 'Ognisko', 'ogn_barb02.gif', 8, 12, 32, 32),
+        npc('grzmiel-castellan', 'Kasztelan Grom', 'grzmiel-castellan.png', 12, 10.6875, 32, 48),
+        npc('grzmiel-armourer', 'Płatnerz Wojmir', 'grzmiel-armourer.png', 5.9062, 6.6875, 32, 48),
+        npc('grzmiel-scout', 'Zwiadowca Turoń', 'grzmiel-scout.png', 18.0938, 6.6875, 32, 48),
+        npc('grzmiel-watch', 'Straż Przełęczy', 'grzmiel-watch.png', 12, 2.9062, 32, 48),
     ],
     locations: [
         battle(
-            'thuzal-highlands',
-            'Wyżyna Thuzalu',
+            'grzmiel-thunder-ridge',
+            'Grań Piorunów',
             '010.jpg',
-            2,
-            1.5,
+            3,
+            2.5,
             4,
             3,
             70,
@@ -625,11 +674,11 @@ const THUZAL: GameMapData = buildMap(8, {
             3,
         ),
         battle(
-            'thuzal-fortress',
-            'Twierdza Thuzalu',
+            'grzmiel-mine-shafts',
+            'Sztolnie Grzmiela',
             '023.jpg',
-            19,
-            2,
+            22,
+            2.5,
             4,
             3,
             75,
@@ -638,11 +687,11 @@ const THUZAL: GameMapData = buildMap(8, {
             ['blackDemon', 'avenger'],
             3,
         ),
-        location('thuzal-arena', 'Arena', 'arena', '001.jpg', 20, 11, 4, 3, 3, { levelReq: 70 }),
-        location('thuzal-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 2, 11, 3, 3, 3),
-        location('thuzal-inn', 'Karczma Warowna', 'rest', '025.jpg', 15.5, 9.5, 3, 3),
-        shopLocation('thuzal-shop', 'Sklep', '001.jpg', 10.5, 2, 3, 3, 'blacksmith_5'),
-        location('thuzal-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+        location('grzmiel-arena', 'Arena', 'arena', '001.jpg', 21.5, 13, 5, 4, 3, { levelReq: 70 }),
+        location('grzmiel-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 2.5, 12.5, 3, 3, 3),
+        location('grzmiel-inn', 'Gospoda pod Kuszą', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
+        shopLocation('grzmiel-shop', 'Płatnerz', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_5'),
+        location('grzmiel-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         possessedPaladin: enemy('Opętany Paladyn', 'opetanypaladyn.gif', 810, 100, 152, 361, 835),
@@ -666,20 +715,20 @@ const THUZAL: GameMapData = buildMap(8, {
     },
 });
 
-const HILAIA: GameMapData = buildMap(9, {
+const ISMERIA: GameMapData = buildMap(9, {
     npcs: [
-        npc('hilaia-npc-1', 'Lady Gipsyanne', 'aryst01.gif', 12, 7.5, 32, 48),
-        npc('hilaia-npc-2', 'Bard Grant', 'npc232.gif', 4, 4.5, 32, 48),
-        npc('hilaia-npc-3', 'Milena', 'npc239.gif', 19, 9.5, 32, 48),
-        npc('hilaia-npc-4', 'Makatara', 'npc233.gif', 7, 11.5, 32, 48),
+        npc('ismeria-exile', 'Zimosław Wygnaniec', 'ismeria-exile.png', 12, 10.6875, 32, 48),
+        npc('ismeria-shaman', 'Szamanka Wiłna', 'ismeria-shaman.png', 8.9062, 6.6875, 32, 48),
+        npc('ismeria-smith', 'Kowal Ostroga', 'ismeria-smith.png', 6.0938, 6.6875, 32, 48),
+        npc('ismeria-cat', 'Śnieżek', 'ismeria-cat.png', 16.2812, 7.8438, 20, 18),
     ],
     locations: [
         battle(
-            'hilaia-burnt-fields',
-            'Spalone Pola',
+            'ismeria-ice-rifts',
+            'Lodowe Rozpadliny',
             '014.jpg',
+            3,
             2.5,
-            2,
             4,
             3,
             80,
@@ -689,10 +738,10 @@ const HILAIA: GameMapData = buildMap(9, {
             3,
         ),
         battle(
-            'hilaia-sanctuary',
-            'Sanktuarium Hilaii',
+            'ismeria-frozen-haven',
+            'Zamarzła Przystań',
             '027.jpg',
-            19,
+            22,
             2.5,
             4,
             3,
@@ -702,11 +751,11 @@ const HILAIA: GameMapData = buildMap(9, {
             ['founder', 'cerberus'],
             3,
         ),
-        location('hilaia-arena', 'Arena', 'arena', '030.jpg', 20, 10.5, 4, 3, 3, { levelReq: 80 }),
-        location('hilaia-tough', 'Mocny przeciwnik', 'toughenemy', '028.jpg', 2, 11, 3, 3, 3),
-        location('hilaia-inn', 'Karczma Wygnańców', 'rest', '025.jpg', 15, 9, 3, 3),
-        shopLocation('hilaia-shop', 'Sklep', '001.jpg', 10, 2, 3, 3, 'blacksmith_6'),
-        location('hilaia-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+        location('ismeria-arena', 'Arena', 'arena', '030.jpg', 21.5, 12, 5, 4, 3, { levelReq: 80 }),
+        location('ismeria-tough', 'Mocny przeciwnik', 'toughenemy', '028.jpg', 2.5, 11.5, 3, 3, 3),
+        location('ismeria-inn', 'Karczma pod Szronem', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
+        shopLocation('ismeria-shop', 'Zbrojownia Wygnańców', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_6'),
+        location('ismeria-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         blackDemon: enemy('Czarny Demon', 'demon_cz_s.gif', 1223, 144, 219, 409, 1670),
@@ -730,21 +779,47 @@ const HILAIA: GameMapData = buildMap(9, {
     },
 });
 
-const ELIZJA: GameMapData = buildMap(10, {
+const ZORYAN: GameMapData = buildMap(10, {
     npcs: [
-        npc('elizja-npc-1', 'Strażnik Bramy', 'npc256.gif', 12, 4.5, 32, 48),
-        npc('elizja-npc-2', 'Sir Gallen', 'npc57.gif', 4, 5.5, 32, 48),
-        npc('elizja-npc-3', 'Alan', 'npc240.gif', 18, 8.5, 32, 48),
-        npc('elizja-npc-4', 'Ognisko', 'ogn_barb02.gif', 9, 12, 32, 32),
+        npc('zoryan-warden', 'Strażniczka Jutrzenka', 'zoryan-warden.png', 12, 10.9062, 32, 48),
+        npc('zoryan-master', 'Mistrz Wid', 'zoryan-master.png', 8.9062, 7.0938, 32, 48),
+        npc('zoryan-herald', 'Herold Blask', 'zoryan-herald.png', 15.3125, 7.0938, 32, 48),
+        npc('zoryan-guard', 'Straż Świtu', 'zoryan-guard.png', 12, 2.9062, 32, 48),
     ],
     locations: [
-        battle('elizja-gate', 'Brama Elizji', '031.jpg', 2, 2, 4, 3, 90, 91, 95, ['founder', 'veryEvilPatrick'], 3),
-        battle('elizja-throne', 'Tron Elizji', '033.jpg', 19, 2, 4, 3, 95, 96, 100, ['blackDemon', 'boneLord'], 3),
-        location('elizja-arena', 'Arena', 'arena', '001.jpg', 20, 11, 4, 3, 3, { levelReq: 90 }),
-        location('elizja-tough', 'Mocny przeciwnik', 'toughenemy', '034.jpg', 2, 11, 3, 3, 3),
-        location('elizja-inn', 'Karczma na Końcu Drogi', 'rest', '025.jpg', 15.5, 9, 3, 3),
-        shopLocation('elizja-shop', 'Sklep', '001.jpg', 10.5, 2.5, 3, 3, 'blacksmith_6'),
-        location('elizja-world', 'Mapa Świata', 'worldmap', '', 11, 14.5, 3, 2),
+        battle(
+            'zoryan-marble-gate',
+            'Marmurowe Wrota',
+            '031.jpg',
+            3,
+            2.5,
+            4,
+            3,
+            90,
+            91,
+            95,
+            ['founder', 'veryEvilPatrick'],
+            3,
+        ),
+        battle(
+            'zoryan-dawn-throne',
+            'Tron Zorzy',
+            '033.jpg',
+            22,
+            2.5,
+            4,
+            3,
+            95,
+            96,
+            100,
+            ['blackDemon', 'boneLord'],
+            3,
+        ),
+        location('zoryan-arena', 'Arena', 'arena', '001.jpg', 21.5, 13, 5, 4, 3, { levelReq: 90 }),
+        location('zoryan-tough', 'Mocny przeciwnik', 'toughenemy', '034.jpg', 2.5, 12.5, 3, 3, 3),
+        location('zoryan-inn', 'Gospoda Ostatniego Świtu', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
+        shopLocation('zoryan-shop', 'Skarbiec Zoryanu', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_6'),
+        location('zoryan-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
         founder: enemy('Założyciel', 'zalozyciel.gif', 2124, 232, 353, 458, 3341),
@@ -769,16 +844,16 @@ const ELIZJA: GameMapData = buildMap(10, {
 });
 
 export const MAPS: Record<number, GameMapData> = {
-    1: ITHAN,
-    2: TORNEG,
-    3: KARKA_HAN,
-    4: WERBIN,
-    5: EAQUIA,
-    6: NITHAL,
-    7: TUZMER,
-    8: THUZAL,
-    9: HILAIA,
-    10: ELIZJA,
+    1: OLSZAWA,
+    2: RUDZIN,
+    3: WIELGRAD,
+    4: CZARNOBOR,
+    5: SOLWAR,
+    6: NIHRAST,
+    7: ZHURMAT,
+    8: GRZMIEL,
+    9: ISMERIA,
+    10: ZORYAN,
 };
 
 export const WORLD_MAP_POSITIONS: Array<{ id: number; x: number; y: number }> = [
@@ -804,7 +879,7 @@ export const POTION_EFFECT_RANGES: Record<string, Record<ItemRarityValue, [numbe
 };
 
 /**
- * The two largest bags, carried by every shop from Werbin on.
+ * The two largest bags, carried by every shop from Czarnobór on.
  *
  * Shared rather than copied so the late-game shops cannot drift apart on the
  * one item a player is guaranteed to want.
@@ -960,9 +1035,9 @@ export const SHOPS: Record<string, Shop> = {
 
             // Mid-game tiers around level 15/20/25.
             //
-            // This shop serves both Torneg (level 9+) and Karka-han (level 20+),
+            // This shop serves both Rudzin (level 9+) and Wielgrad (level 20+),
             // so it is the only stock a level 20-30 player can actually reach —
-            // blacksmith_3 sits in Werbin behind a level 30 gate. Its range used
+            // blacksmith_3 sits in Czarnobór behind a level 30 gate. Its range used
             // to stop at 18, leaving that stretch with nothing to buy.
             shopItem(
                 405,
@@ -1154,8 +1229,8 @@ export const SHOPS: Record<string, Shop> = {
 
     // ================= Late game =================
     //
-    // One shop per two lands, the same way `blacksmith_2` serves Torneg and
-    // Karka-han. Each carries two tiers: gear for the first land it serves and
+    // One shop per two lands, the same way `blacksmith_2` serves Rudzin and
+    // Wielgrad. Each carries two tiers: gear for the first land it serves and
     // gear for the second. Stats keep the curve the earlier shops draw —
     // weapons roughly ×1.7 per ten levels, armour ×1.7, health ×1.8 — because
     // enemy damage rises with the level multiplier and armour plus health are
@@ -1196,7 +1271,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 802,
-                'Ostrze Nithalu',
+                'Ostrze Nihrastu',
                 'items/sword.gif',
                 'weapon',
                 'legendary',
@@ -1206,7 +1281,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 812,
-                'Pancerz Nithalu',
+                'Pancerz Nihrastu',
                 'items/plate.gif',
                 'armor',
                 'legendary',
@@ -1216,7 +1291,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 822,
-                'Runa Nithalu',
+                'Runa Nihrastu',
                 'items/rune.gif',
                 'talisman',
                 'legendary',
@@ -1233,7 +1308,7 @@ export const SHOPS: Record<string, Shop> = {
         items: [
             shopItem(
                 901,
-                'Trójząb Tuzmeru',
+                'Trójząb Zhurmatu',
                 'items/spear.gif',
                 'weapon',
                 'heroic',
@@ -1243,7 +1318,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 911,
-                'Kirys Tuzmeru',
+                'Kirys Zhurmatu',
                 'items/plate.gif',
                 'armor',
                 'heroic',
@@ -1253,7 +1328,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 921,
-                'Medalion Tuzmeru',
+                'Medalion Zhurmatu',
                 'items/medal.gif',
                 'talisman',
                 'heroic',
@@ -1263,7 +1338,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 902,
-                'Młot Thuzalu',
+                'Młot Grzmiela',
                 'items/hammer.gif',
                 'weapon',
                 'legendary',
@@ -1273,7 +1348,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 912,
-                'Zbroja Thuzalu',
+                'Zbroja Grzmiela',
                 'items/plate.gif',
                 'armor',
                 'legendary',
@@ -1283,7 +1358,7 @@ export const SHOPS: Record<string, Shop> = {
             ),
             shopItem(
                 922,
-                'Pierścień Thuzalu',
+                'Pierścień Grzmiela',
                 'items/ring.gif',
                 'talisman',
                 'legendary',
