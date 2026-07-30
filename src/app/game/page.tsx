@@ -16,7 +16,7 @@ import WorldMapView from '@/components/game/views/WorldMapView';
 import Modal from '@/components/ui/Modal';
 import SettingsModal from '@/components/ui/SettingsModal';
 import { arenaPaCost } from '@/game/catalog';
-import { EXPEDITION_FIGHTS, STAGES_PER_LOCATION } from '@/game/config';
+import { EXPEDITION_FIGHTS } from '@/game/config';
 import { errorMessage } from '@/game/errors';
 import type {
     ArenaDifficultyValue,
@@ -237,11 +237,13 @@ export default function GamePage() {
             return;
         }
 
-        const stages = battleLocation?.stages ?? [];
-        const nextStage = Math.min(STAGES_PER_LOCATION, lastFight.stage + (battleResult?.won ? 1 : 0));
-        const target =
-            stages.find((stage) => stage.stage === nextStage && stage.unlocked) ??
-            stages.find((stage) => stage.stage === lastFight.stage);
+        // An expedition stays on the stage the player picked. It used to climb a
+        // stage on every win, so choosing "Etap 3" and pressing on through the
+        // run ended up fighting — and looting — stage 5: the enemies got harder
+        // and the drops came at a level nobody asked for. Winning still unlocks
+        // the next stage in `fightStage`, so the climb is there to take from the
+        // map whenever the player wants it.
+        const target = (battleLocation?.stages ?? []).find((stage) => stage.stage === lastFight.stage);
 
         if (!target) {
             closeBattle();

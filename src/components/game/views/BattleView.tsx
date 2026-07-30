@@ -72,6 +72,11 @@ export default function BattleView({
                                 <span className="drop-name" style={{ color: drop.rarityColor }}>
                                     {drop.name}
                                 </span>
+                                {/* Loot comes at the level of what killed it, and
+                                    an expedition stays on the stage you picked —
+                                    so say the level here rather than making the
+                                    player hover the item to check. */}
+                                <span className="drop-level">Poziom {drop.level}</span>
                             </div>
                         </div>
                     )}
