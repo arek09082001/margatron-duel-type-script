@@ -3,11 +3,11 @@
  */
 
 import { inventorySize } from './bags';
-import { getShopFor } from './catalog';
 import { equipmentSlotFor } from './equipment';
 import { GameError } from './errors';
 import { recalculate } from './profile';
 import { randomHex } from './rng';
+import { requireShop } from './shops';
 import type { Equipped, EquipmentSlot, GameProfile, Item, ItemEffect } from './types';
 
 /** Index of the last slot still holding something, or -1 when empty. */
@@ -73,16 +73,20 @@ export function addItem(profile: GameProfile, item: Item): boolean {
 }
 
 export function buyItem(profile: GameProfile, shopId: string, itemId: string | number): void {
-    const shop = getShopFor(profile.level, shopId);
-
-    if (!shop) {
-        throw new GameError('Nie znaleziono sklepu.');
-    }
-
+    const shop = requireShop(shopId);
     const item = shop.items.find((candidate) => String(candidate.id) === String(itemId));
 
     if (!item) {
         throw new GameError('Ten przedmiot nie istnieje w sklepie.');
+    }
+
+    // A town stocks its whole ten-level band, so its top shelf is above the head
+    // of anyone who has just arrived. That is the point — you can see what the
+    // land is worth working towards — but it is not for sale yet. The rule lives
+    // here rather than in the shop screen so it holds however the buy is asked
+    // for.
+    if (profile.level < (item.level ?? 1)) {
+        throw new GameError(`Ten przedmiot wymaga ${item.level} poziomu.`);
     }
 
     if (profile.gold < item.price) {

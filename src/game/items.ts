@@ -6,7 +6,6 @@
  * curve without going through a random roll.
  */
 
-import { BASE_DROP_CHANCES, POTION_EFFECT_RANGES } from './catalog';
 import { MAX_BAG_SLOTS } from './config';
 import {
     ARENA_DIFFICULTY_META,
@@ -23,6 +22,23 @@ import {
 } from './gear';
 import { percentRoll, pickWeighted, randomInt } from './rng';
 import type { ArenaDifficultyValue, Item, ItemRarityValue, ItemTypeValue } from './types';
+
+export const BASE_DROP_CHANCES: Record<ItemRarityValue, number> = {
+    common: 60,
+    unique: 25,
+    heroic: 12,
+    legendary: 3,
+};
+
+/** How many action points a flask restores, by rarity. */
+export const POTION_EFFECT_RANGES: Record<string, Record<ItemRarityValue, [number, number]>> = {
+    pa: {
+        common: [5, 5],
+        unique: [5, 10],
+        heroic: [10, 20],
+        legendary: [25, 25],
+    },
+};
 
 export function rollForDrop(
     enemyLevel: number,
