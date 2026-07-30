@@ -4,6 +4,7 @@ import type { BattleLog } from '@/game/types';
 
 const ENTRY_CLASSES: Partial<Record<BattleLog['type'], string>> = {
     'battle-start': 'info',
+    stun: 'info',
     'level-up': 'levelup',
     'attribute-points': 'info',
 };
@@ -43,6 +44,8 @@ export default function BattleLogEntry({ log }: { log: BattleLog }) {
                 )}
 
                 {log.type === 'dodge' && <>Unikasz ataku przeciwnika {log.attackerName}!</>}
+
+                {log.type === 'stun' && <>Ogłuszasz przeciwnika {log.targetName} — traci turę!</>}
 
                 {log.type === 'reward' && <>Doświadczenie: {log.amount}p</>}
 

@@ -1646,6 +1646,7 @@ b.enemy-attack { color: red; }
 
 .drop-icon { font-size: 32px; margin-bottom: 5px; }
 .drop-name { font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 3px; }
+.drop-level { font-size: 10px; color: #b9a97a; }
 .drop-hint { font-size: 9px; color: #888; }
 
 /* ================= EQUIPMENT COLORS ================= */

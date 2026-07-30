@@ -14,6 +14,7 @@
 import { assetUrl } from './assets';
 import { ITEM_TYPE_LABELS, RARITY_META } from './enums';
 import { armorBudget, healthBudget, itemValueBudget, weaponDamageBudget } from './gearCurve';
+import { powerOf } from './itemPower';
 import { LIVE_RANDOM, type RandomSource, randomId } from './rng';
 import type { BonusStat, Item, ItemRarityValue, ItemStats, StatKey } from './types';
 
@@ -528,32 +529,6 @@ function flattenBonusStats(bonusStats: Record<string, BonusStat>): ItemStats {
     return flattened;
 }
 
-/**
- * One number the shop can sort every slot by.
- *
- * The weights are the exchange rate the curve is built on: a point of armour is
- * worth about six points of health, and a percentage point is worth a chunk of
- * either. It is a display and sorting figure, not something the battle reads.
- */
-function itemPower(stats: ItemStats, effect: { value: number } | null): number {
-    const percentSum =
-        (stats.critChance ?? 0) + (stats.critPower ?? 0) + (stats.dodge ?? 0) + (stats.stun ?? 0);
-
-    const damage = ((stats.dmgMin ?? 0) + (stats.dmgMax ?? 0)) / 2;
-
-    return Math.max(
-        1,
-        Math.round(
-            damage * 6 +
-                (stats.armor ?? 0) * 6 +
-                (stats.hp ?? 0) * 0.6 +
-                percentSum * 20 +
-                (stats.bagSlots ?? 0) * 120 +
-                (effect?.value ?? 0) * 2,
-        ),
-    );
-}
-
 type FinalizeInput = {
     id: string;
     name: string;
@@ -591,7 +566,7 @@ function finalize(input: FinalizeInput): Item {
         effect: effect?.type ?? null,
         effectValue: effect?.value ?? null,
         effectData: effect,
-        power: itemPower(input.stats, effect),
+        power: powerOf(input.type, input.level, input.stats, effect),
         price: Math.max(1, Math.round(input.price)),
         quantity: 1,
         ...input.stats,

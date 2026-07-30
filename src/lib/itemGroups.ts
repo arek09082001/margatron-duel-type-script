@@ -1,3 +1,4 @@
+import { itemPower } from '@/game/itemPower';
 import type { Item, ItemTypeValue } from '@/game/types';
 
 /** Section order in the shop: the slots a player fills, then consumables. */
@@ -59,7 +60,7 @@ export function groupItemsByType<T>(entries: T[], getItem: (entry: T) => Item): 
 
             return (
                 (a.level ?? 1) - (b.level ?? 1) ||
-                (a.power ?? 0) - (b.power ?? 0) ||
+                itemPower(a) - itemPower(b) ||
                 a.name.localeCompare(b.name)
             );
         });

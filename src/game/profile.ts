@@ -71,6 +71,17 @@ export function createProfile(id: string, nick: string, now: number = Date.now()
     };
 }
 
+/**
+ * Health a character has before any gear — the base, vitality, and what
+ * levelling hands out.
+ *
+ * Exported because `itemPower` has to price a point of health against a point of
+ * armour, and that trade depends on the pool the point is added to.
+ */
+export function innateHealth(level: number, vitality = 5): number {
+    return 50 + (vitality - 5) * 10 + (Math.max(1, level) - 1) * 5;
+}
+
 /** Recomputes every derived combat stat from attributes + equipment. */
 export function recalculate(profile: GameProfile): GameProfile {
     const { weapon, armor, accessory } = profile.equipped;
@@ -84,7 +95,7 @@ export function recalculate(profile: GameProfile): GameProfile {
     const dodgeBonus = stat(armor, 'dodge') + stat(accessory, 'dodge');
     const stunBonus = stat(weapon, 'stun') + stat(accessory, 'stun');
 
-    const hp = 50 + (profile.vitality - 5) * 10 + (profile.level - 1) * 5 + hpBonus;
+    const hp = innateHealth(profile.level, profile.vitality) + hpBonus;
     const critChance = 5 + critChanceBonus + Math.floor(profile.luck / 3);
     const dodgeChance = 2 + dodgeBonus + Math.floor(profile.luck / 5);
 
