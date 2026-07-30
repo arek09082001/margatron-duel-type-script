@@ -56,6 +56,78 @@
   background: #3b0510;
   border-color: #8f541f;
   color:white;
+  /* Wider than a plain tooltip: the comparison rows are three columns. */
+  max-width: 330px;
+}
+
+/* An item the player has not reached the level for yet. */
+#tip i.idesc.too-high { color: #e56a6a; }
+
+/* --- Comparison against the item currently worn in that slot --- */
+
+#tip .tip-compare {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid #8f541f;
+  text-align: left;
+}
+#tip .cmp-head {
+  color: #d9b38c;
+  font-style: italic;
+  margin-bottom: 4px;
+}
+#tip .cmp-head.worn { color: #9ad7ff; }
+#tip .cmp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1.6;
+}
+#tip .cmp-label {
+  flex: 1 1 auto;
+  color: #ffc;
+}
+#tip .cmp-values {
+  flex: 0 0 auto;
+  color: #b0a08c;
+  white-space: nowrap;
+}
+#tip .cmp-delta {
+  flex: 0 0 auto;
+  min-width: 44px;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: bold;
+}
+#tip .cmp-tag {
+  margin-left: 5px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+#tip .cmp-better .cmp-delta,
+#tip .cmp-gained .cmp-delta,
+#tip .cmp-gained .cmp-tag { color: #5fd35f; }
+#tip .cmp-worse .cmp-delta,
+#tip .cmp-lost .cmp-delta,
+#tip .cmp-lost .cmp-tag { color: #e56a6a; }
+#tip .cmp-equal .cmp-delta { color: #999; }
+/* A stat that falls away entirely: dim the label so the row reads as a hole. */
+#tip .cmp-lost .cmp-label { color: #c9a; }
+
+#tip .cmp-total {
+  margin-top: 5px;
+  font-weight: bold;
+}
+#tip .cmp-total.up { color: #5fd35f; }
+#tip .cmp-total.down { color: #e56a6a; }
+#tip .cmp-total.same { color: #bbb; }
+#tip .cmp-note { color: #999; }
+#tip .cmp-warn {
+  margin-top: 5px;
+  color: #e56a6a;
+  font-weight: bold;
 }
 
 /*

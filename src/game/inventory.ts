@@ -4,6 +4,7 @@
 
 import { inventorySize } from './bags';
 import { getShopFor } from './catalog';
+import { equipmentSlotFor } from './equipment';
 import { GameError } from './errors';
 import { recalculate } from './profile';
 import { randomHex } from './rng';
@@ -103,18 +104,13 @@ export function buyItem(profile: GameProfile, shopId: string, itemId: string | n
 }
 
 function slotForItem(item: Item): EquipmentSlot {
-    switch (item.type ?? item.itemType) {
-        case 'weapon':
-            return 'weapon';
-        case 'armor':
-            return 'armor';
-        case 'talisman':
-            return 'accessory';
-        case 'bag':
-            return 'bag';
-        default:
-            throw new GameError('Tego przedmiotu nie da się założyć.');
+    const slot = equipmentSlotFor(item);
+
+    if (!slot) {
+        throw new GameError('Tego przedmiotu nie da się założyć.');
     }
+
+    return slot;
 }
 
 /**
