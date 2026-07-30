@@ -3,8 +3,9 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { bagSlots } from '@/game/bags';
-import type { Item } from '@/game/types';
+import type { Item, PlayerView } from '@/game/types';
 import { bonusRows } from '@/lib/format';
+import { type ItemComparison, compareWithEquipped, formatDelta } from '@/lib/itemCompare';
 
 const OFFSET = 10;
 
@@ -39,8 +40,17 @@ export function useItemTooltip(): ItemTooltipController {
  * Item tooltip. Positioning mirrors the Vue original: centred above the hovered
  * cell, flipped below when it would clip the top of the viewport, and clamped
  * against the right edge. Measured after paint so the size is known.
+ *
+ * `user` is optional so a read-only tooltip can be rendered without one; with a
+ * player it also prints how the item stacks up against the worn one.
  */
-export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }) {
+export default function ItemTooltip({
+    anchor,
+    user,
+}: {
+    anchor: TooltipAnchor | null;
+    user?: PlayerView | null;
+}) {
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
 
@@ -65,7 +75,11 @@ export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }
             x = window.innerWidth - offsetWidth - OFFSET;
         }
 
-        setPosition({ x: Math.max(0, x), y });
+        // The comparison block makes the tooltip tall enough that flipping it
+        // below a cell near the bottom of the backpack would run it off screen.
+        const lowestTop = Math.max(0, window.innerHeight - offsetHeight - OFFSET);
+
+        setPosition({ x: Math.max(0, x), y: Math.min(Math.max(0, y), lowestTop) });
     }, [anchor]);
 
     if (!anchor) {
@@ -74,6 +88,7 @@ export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }
 
     const item = anchor.item;
     const slots = bagSlots(item);
+    const comparison = user ? compareWithEquipped(item, user) : null;
 
     return (
         <div
@@ -107,11 +122,76 @@ export default function ItemTooltip({ anchor }: { anchor: TooltipAnchor | null }
                 ))}
 
                 <br />
-                {(item.level ?? 1) > 1 && <i className="idesc">Wymagany poziom: {item.level}</i>}
+                {(item.level ?? 1) > 1 && (
+                    <i className={`idesc${comparison?.levelLocked ? ' too-high' : ''}`}>
+                        Wymagany poziom: {item.level}
+                    </i>
+                )}
                 {/* A bag has no combat power; its slot count says everything. */}
                 {item.power > 0 && slots === 0 && <i className="idesc">Moc przedmiotu: {item.power}</i>}
                 <i className="idesc">Wartość: {item.price}</i>
+
+                {comparison && <ComparisonBlock comparison={comparison} />}
             </div>
+        </div>
+    );
+}
+
+/**
+ * The "should I put this on?" half of the tooltip.
+ *
+ * Every row reads `worn → hovered` followed by the difference, so a stat that
+ * only one of the two carries shows a dash on the other side and says outright
+ * whether it is new or about to fall away.
+ */
+function ComparisonBlock({ comparison }: { comparison: ItemComparison }) {
+    if (comparison.wearing) {
+        return (
+            <div className="tip-compare">
+                <div className="cmp-head worn">To masz właśnie założone</div>
+            </div>
+        );
+    }
+
+    const { equipped, rows, powerDelta } = comparison;
+
+    return (
+        <div className="tip-compare">
+            <div className="cmp-head">
+                {equipped ? `Zamiast: ${equipped.name}` : 'Ten slot masz pusty'}
+            </div>
+
+            {rows.map((row) => (
+                <div key={row.key} className={`cmp-row cmp-${row.state}`}>
+                    <span className="cmp-label">
+                        {row.label}
+                        {row.state === 'lost' && <span className="cmp-tag">przepada</span>}
+                        {row.state === 'gained' && <span className="cmp-tag">nowe</span>}
+                    </span>
+                    <span className="cmp-values">
+                        {row.current ?? '—'} → {row.candidate ?? '—'}
+                    </span>
+                    <span className="cmp-delta">{row.delta}</span>
+                </div>
+            ))}
+
+            {rows.length === 0 && <div className="cmp-note">Dokładnie te same statystyki</div>}
+
+            {/* A bag's power is nothing but its slots, which the rows already say. */}
+            {rows.length > 0 && comparison.slot !== 'bag' && (
+                <div className={`cmp-total ${powerDelta > 0 ? 'up' : powerDelta < 0 ? 'down' : 'same'}`}>
+                    {powerDelta === 0
+                        ? 'Ta sama moc przedmiotu'
+                        : `Moc przedmiotu: ${formatDelta(powerDelta)}`}
+                </div>
+            )}
+
+            {comparison.levelLocked && (
+                <div className="cmp-warn">Za wysoki poziom — jeszcze tego nie założysz</div>
+            )}
+            {comparison.bagTooSmall && (
+                <div className="cmp-warn">Za mała — najpierw zrób miejsce w plecaku</div>
+            )}
         </div>
     );
 }

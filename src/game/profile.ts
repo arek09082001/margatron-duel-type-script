@@ -15,15 +15,14 @@ import {
     actionPointRegenerationLimit,
     actionPointRegenerationSeconds,
 } from './config';
+import { itemStat as stat } from './equipment';
 import { GameError } from './errors';
 import type {
     ActionPointState,
     GameProfile,
-    Item,
     LevelUpResult,
     PlayerAttributeKey,
     PlayerView,
-    StatKey,
 } from './types';
 
 export function expForNextLevel(level: number): number {
@@ -70,41 +69,6 @@ export function createProfile(id: string, nick: string, now: number = Date.now()
         inventory: Array.from({ length: INVENTORY_SIZE }, () => null),
         equipped: { weapon: null, armor: null, accessory: null, bag: null },
     };
-}
-
-/**
- * Reads a stat from an item, checking the flattened root first and then the
- * `stats` / `bonusStats` bags — bonus stats may be either a raw number or a
- * `{ value, name, suffix }` descriptor.
- */
-function stat(item: Item | null, key: StatKey): number {
-    if (!item) {
-        return 0;
-    }
-
-    const sources: Array<Record<string, unknown> | undefined> = [
-        item as unknown as Record<string, unknown>,
-        item.stats as Record<string, unknown> | undefined,
-        item.bonusStats as Record<string, unknown> | undefined,
-    ];
-
-    for (const source of sources) {
-        if (!source || !(key in source)) {
-            continue;
-        }
-
-        const value = source[key];
-
-        if (value && typeof value === 'object' && 'value' in value) {
-            const nested = (value as { value: unknown }).value;
-
-            return typeof nested === 'number' ? nested : 0;
-        }
-
-        return typeof value === 'number' ? value : 0;
-    }
-
-    return 0;
 }
 
 /** Recomputes every derived combat stat from attributes + equipment. */

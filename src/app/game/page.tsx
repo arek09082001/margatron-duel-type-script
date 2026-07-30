@@ -469,7 +469,7 @@ export default function GamePage() {
 
             <footer id="game-footer" />
 
-            <ItemTooltip anchor={tooltip.anchor} />
+            <ItemTooltip anchor={tooltip.anchor} user={user} />
         </div>
     );
 }
