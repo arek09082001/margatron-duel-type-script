@@ -327,6 +327,7 @@ export type BattleLog =
           critical: boolean;
       }
     | { type: 'dodge'; actor: 'player'; attacker: 'enemy'; attackerName: string }
+    | { type: 'stun'; actor: 'player'; target: 'enemy'; targetName: string }
     | { type: 'reward'; rewardType: 'experience'; amount: number }
     | { type: 'level-up'; level: number }
     | { type: 'attribute-points'; levelsGained: number; points: number }

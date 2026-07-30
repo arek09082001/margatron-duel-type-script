@@ -175,6 +175,20 @@ function runAutoBattle(
             return buildResult(name, enemy, true, playerHp, enemyHp, log, arenaDifficulty);
         }
 
+        // Ogłuszenie: the hit rattles the enemy and it loses its turn.
+        //
+        // The stat was rolled on gear, summed by `recalculate`, printed in the
+        // sidebar and even had an achievement — and no fight ever read it. Items
+        // were advertising a stat that did nothing, which also made every shape
+        // that rolls towards it (młot, maczuga, kiścień) quietly worse than its
+        // neighbours. It is capped at 40% like unik, so at most it takes two
+        // turns in five.
+        if (percentRoll() < profile.stun) {
+            log.push({ type: 'stun', actor: 'player', target: 'enemy', targetName: enemy.name });
+
+            continue;
+        }
+
         const enemyDmg = randomInt(enemy.dmgMin, Math.max(enemy.dmgMin, enemy.dmgMax));
 
         if (percentRoll() < profile.dodge) {

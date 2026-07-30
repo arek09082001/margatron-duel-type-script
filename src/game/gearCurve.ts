@@ -32,6 +32,31 @@
 
 type Anchor = readonly [level: number, value: number];
 
+/**
+ * The relationships the anchors below were read off, as numbers rather than
+ * prose. `itemPower` values a stat by what it is worth against the enemy of the
+ * item's level, and the only description of that enemy is the one these anchors
+ * were built from — so the constants have to be readable, not just commented.
+ */
+
+/** Share of an incoming hit that a worn chest piece of the level eats. */
+export const ARMOUR_SHARE_OF_HIT = 0.3;
+
+/** Hits a weapon of the level needs to kill, before crits. */
+export const WEAPON_HITS_TO_KILL = 11.5;
+
+/**
+ * What a player actually wears, relative to the common average the curve
+ * describes: the best of many drops, so rarity, quality and the base's own
+ * factor put it about half again above the line.
+ */
+export const WORN_GEAR_FACTOR = 1.5;
+
+/** Damage of one hit from the enemy a player of this level is fighting. */
+export function referenceEnemyHit(level: number): number {
+    return armorBudget(level) / ARMOUR_SHARE_OF_HIT;
+}
+
 /** Average damage of a common, average-quality weapon of that level. */
 const WEAPON_DAMAGE: readonly Anchor[] = [
     [1, 3],

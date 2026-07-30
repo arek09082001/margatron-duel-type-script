@@ -3,6 +3,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { bagSlots } from '@/game/bags';
+import { hasCombatPower, itemPower } from '@/game/itemPower';
 import type { Item, PlayerView } from '@/game/types';
 import { bonusRows } from '@/lib/format';
 import { type ItemComparison, compareWithEquipped, formatDelta } from '@/lib/itemCompare';
@@ -127,8 +128,11 @@ export default function ItemTooltip({
                         Wymagany poziom: {item.level}
                     </i>
                 )}
-                {/* A bag has no combat power; its slot count says everything. */}
-                {item.power > 0 && slots === 0 && <i className="idesc">Moc przedmiotu: {item.power}</i>}
+                {/* Neither a bag nor a potion fights, so neither gets a power
+                    line — capacity and action points are already spelled out
+                    above. The figure is recomputed rather than read off the item,
+                    which may carry one from an older formula. */}
+                {hasCombatPower(item) && <i className="idesc">Moc przedmiotu: {itemPower(item)}</i>}
                 <i className="idesc">Wartość: {item.price}</i>
 
                 {comparison && <ComparisonBlock comparison={comparison} />}

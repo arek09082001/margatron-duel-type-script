@@ -14,6 +14,7 @@
 
 import { inventorySize } from '@/game/bags';
 import { equipmentSlotFor, itemStat } from '@/game/equipment';
+import { itemPower } from '@/game/itemPower';
 import type { EquipmentSlot, Item, PlayerView, StatKey } from '@/game/types';
 
 import { statName, statSuffix } from './format';
@@ -49,7 +50,13 @@ export type ItemComparison = {
     /** The hovered item *is* the equipped one, so there is nothing to compare. */
     wearing: boolean;
     rows: ComparisonRow[];
-    /** Difference in item power, the one-number summary the shop sorts by. */
+    /**
+     * Difference in item power — the one-number answer to "is this better?".
+     *
+     * Recomputed from both items rather than read off their stored `power`: a
+     * character carries pieces from every version of the formula they ever
+     * played through, and two figures from two formulas do not subtract.
+     */
     powerDelta: number;
     /** Above the player's level, so it cannot be worn yet. */
     levelLocked: boolean;
@@ -93,7 +100,7 @@ export function compareWithEquipped(item: Item, user: ComparisonContext): ItemCo
         equipped,
         wearing,
         rows: wearing ? [] : buildRows(item, equipped),
-        powerDelta: (item.power ?? 0) - (equipped?.power ?? 0),
+        powerDelta: itemPower(item) - (equipped ? itemPower(equipped) : 0),
         levelLocked: (item.level ?? 1) > user.level,
         bagTooSmall: slot === 'bag' && !wearing && bagWouldSpill(item, user),
     };

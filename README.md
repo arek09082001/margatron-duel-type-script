@@ -85,6 +85,7 @@ src/
 │   ├── gearCurve.ts    krzywa mocy sprzętu na poziom (obrażenia, pancerz, HP, cena)
 │   ├── gear.ts         dziesięć tierów przedmiotów i budowanie pojedynczej sztuki
 │   ├── items.ts        losowanie dropów: typ, jakość i rzadkość
+│   ├── itemPower.ts    moc przedmiotu wyliczona z arytmetyki walki
 │   ├── bags.ts         pojemność plecaka (baza + założona torba)
 │   ├── inventory.ts    ekwipunek, zakładanie, sprzedaż, mikstury
 │   ├── rest.ts         odpoczynek w karczmie
@@ -262,6 +263,81 @@ Procenty — krytyk, unik, ogłuszenie — **nie** rosną z poziomem, tylko z ti
 i rzadkością. Wcześniej mnożył je `1 + poziom * 0,1`, przez co jeden drop z
 pięćdziesiątego poziomu parkował gracza na limitach 50% krytyka i 40% uniku,
 a wszystko znalezione później było już bez znaczenia.
+
+## Moc przedmiotu
+
+Jedna liczba w tooltipie odpowiada na pytanie „czy to jest lepsze od tego, co
+mam?”. Wcześniej liczyła się ze stałych wag — `obrażenia × 6 + pancerz × 6 +
+życie × 0,6 + (krytyk% + moc krytyka% + unik% + ogłuszenie%) × 20` — i mówiła
+nieprawdę na trzy sposoby:
+
+- **moc krytyka ważyła tyle samo co szansa krytyka**, choć płaci tylko wtedy, gdy
+  krytyk wypadnie: przy realnych 10% szansy jeden punkt mocy jest wart mniej więcej
+  szóstą część punktu szansy. Talizman z 10 poziomu z `mocą krytyka 28` dostawał
+  707 punktów mocy — więcej niż każda zbroja jego poziomu — a wyraźnie lepszy
+  talizman z sześciokrotnie wyższą *szansą* krytyka dostawał 262;
+- **pancerz i życie miały na zawsze kurs 10:1**, a pancerz odejmuje się od ciosu
+  na płasko, więc jego wartość zależy od tego, jak duży jest cios: na 10 poziomie
+  jeden punkt zjada 6% ciosu, na 90 — 0,04%;
+- **procenty wyceniano tak, jakby rosły z poziomem**. Nie rosną — rosną tylko
+  z tierem i rzadkością — więc te same 6% szansy krytyka są warte punkt obrażeń
+  na 10 poziomie i kilkaset na 90.
+
+Teraz wagi wynikają z arytmetyki samej walki. Dla poziomu przedmiotu bierzemy
+postać, którą opisuje krzywa, i przeciwnika, z którym ona się bije:
+
+```
+obrażenia na turę   O = obr × (1 + krytyk% / 100 × (moc krytyka% / 100 − 1))
+ciosy do przeżycia  T = życie / ((cios − pancerz) × (1 − unik%) × (1 − ogłuszenie%))
+```
+
+Walkę wygrywa się, zabijając przed śmiercią, więc wartością przedmiotu jest jego
+wpływ na `O × T` — podwojenie jednego jest warte tyle samo co podwojenie
+drugiego. Każdą statystykę przeliczamy więc na obrażenia na turę, które dałyby tę
+samą poprawę, a wagi *wypadają z tych dwóch wzorów*, zamiast być wybrane:
+
+| Statystyka | Wartość punktu |
+| --- | --- |
+| Obrażenia | mnożnik krytyka |
+| Szansa krytyka | `obr × (moc krytyka − 100) / 10 000` |
+| Moc krytyka | `obr × szansa krytyka / 10 000` |
+| Pancerz | `O / (cios − pancerz)` |
+| Punkty życia | `O / życie` |
+| Unik, ogłuszenie | `O / (100 − unik%)` |
+
+Każda waga jest odczytana na poziomie przedmiotu, więc liczba rośnie z poziomem
+(sprzęt z 90 poziomu nie może dostać tyle, ile z 10), procenty zyskują z poziomami,
+a pancerz traci — dokładnie tak, jak zachowuje się pętla walki.
+
+Sprawdzone pomiarem, nie na słowo: dla trzech poziomów (10, 50, 90), wszystkich
+kształtów i wszystkich rzadkości mierzymy w prawdziwej walce `ciosy do przeżycia /
+tury na zabicie`, a potem pytamy, ile par przedmiotów każda formuła ustawia
+w kolejności zgodnej z pomiarem:
+
+| Porównanie | Nowa | Stara |
+| --- | --- | --- |
+| Wszystkie pary w slocie | **98%** | 93% |
+| Ta sama rzadkość i poziom (czyli „który drop zatrzymać”) | **97%** | 86% |
+
+Najbardziej jaskrawy przykład: heroiczna `Zardzewiała Zbroja` jest w walce 2,5×
+lepsza od heroicznej `Zardzewiałej Peleryny` (100,1 do 39,2) — stara formuła
+dawała jej **mniej** mocy (141 do 189).
+
+Moc liczy się na bieżąco z tego, co przedmiot ma na sobie. Przedmioty zapisują się
+w całości, razem z polem `power`, więc postać nosi wartości z każdej wersji
+formuły, przez którą przeszła; tooltip, sklep i porównanie czytają je przez
+`itemPower`, więc wszystkie trzy są na jednej skali. Torby i mikstury nie dostają
+mocy w ogóle — pojemność i PA nie biją.
+
+### Ogłuszenie zaczęło działać
+
+Przy okazji wyszło, że `ogłuszenie` było statystyką-widmem: losowało się na
+sprzęcie, sumowało w `recalculate`, świeciło w panelu gracza i miało własne
+osiągnięcie, ale **żadna walka go nie czytała**. Teraz trafienie z szansą równą
+ogłuszeniu zabiera przeciwnikowi turę (limit 40%, jak przy uniku). Bez tego każdy
+kształt ciągnący w ogłuszenie — młot, maczuga, kiścień, nadziak — był po cichu
+gorszy od sąsiadów, a moc przedmiotu nie mogła jednocześnie być uczciwa i doceniać
+tej statystyki.
 
 ## Torby
 
