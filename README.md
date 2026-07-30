@@ -78,10 +78,12 @@ npm run db:seed     # prisma db seed
 ```
 src/
 ├── game/         logika domenowa — czysty TS, bez Reacta i bez storage
-│   ├── catalog.ts      mapy, lokacje, przeciwnicy, sklepy, bazy przedmiotów
+│   ├── catalog.ts      mapy, lokacje, przeciwnicy, sklepy
 │   ├── profile.ts      statystyki, poziomy, regeneracja PA
 │   ├── battle.ts       auto-walka (expowiska, arena, mocni przeciwnicy)
-│   ├── items.ts        losowanie dropów i generowanie przedmiotów
+│   ├── gearCurve.ts    krzywa mocy sprzętu na poziom (obrażenia, pancerz, HP, cena)
+│   ├── gear.ts         dziesięć tierów przedmiotów i budowanie pojedynczej sztuki
+│   ├── items.ts        losowanie dropów: typ, jakość i rzadkość
 │   ├── bags.ts         pojemność plecaka (baza + założona torba)
 │   ├── inventory.ts    ekwipunek, zakładanie, sprzedaż, mikstury
 │   ├── rest.ts         odpoczynek w karczmie
@@ -140,12 +142,45 @@ w sprzęcie ze sklepu danej krainy i na jej ostatnim poziomie: najsilniejszy
 przeciwnik ginie w około sześciu rundach i potrzebuje około sześciu ciosów, by
 zabić gracza. To krzywa Karka-hanu, najzdrowsza z pierwszych czterech krain.
 
+## Łup
+
+Drop jest główną ścieżką rozwoju — sklep jest podłogą, a nie sufitem. Wszystko,
+co skalowane poziomem (i drop, i stała rotacja w sklepach), liczy się z jednej
+krzywej w [`gearCurve.ts`](src/game/gearCurve.ts), odczytanej z przeciwników,
+których gracz na danym poziomie faktycznie bije:
+
+| Krzywa | Cel |
+| --- | --- |
+| Obrażenia broni | HP przeciwnika / 11,5 — około sześciu rund na zabicie |
+| Pancerz | 0,30 × obrażeń przeciwnika — noszony zjada niecałą połowę ciosu |
+| Punkty życia | 3,2 × obrażeń przeciwnika — około dziewięciu ciosów do przeżycia |
+| Wartość | 4 × złota przeciwnika — sprzedany łup to mniej więcej dwa zabicia |
+
+Liczby opisują **zwykły** przedmiot o średniej jakości; noszony sprzęt to
+najlepszy z wielu dropów, więc rzadkość, jakość i baza windują go do ~1,5×.
+
+Sprzęt dzieli się na **dziesięć tierów, po jednym na krainę**. Tier zmienia
+wygląd i nazwę (`Stalowy Topór` → `Smoczy Topór`), nigdy matematykę — a że
+kształty rotują, plecak na setnym poziomie wygląda inaczej niż na dziesiątym.
+Każdy tier ma trzy bronie, dwie zbroje i dwa talizmany, a każda baza ma swój
+charakter: młot bije mocniej w wąskim zakresie, sztylet najsłabiej, ale ciągnie
+w krytyki. Do tego każdy przedmiot losuje jakość ±15%, więc dwa te same miecze
+z tego samego poziomu nie mają identycznych statystyk.
+
+Procenty — krytyk, unik, ogłuszenie — **nie** rosną z poziomem, tylko z tierem
+i rzadkością. Wcześniej mnożył je `1 + poziom * 0,1`, przez co jeden drop z
+pięćdziesiątego poziomu parkował gracza na limitach 50% krytyka i 40% uniku,
+a wszystko znalezione później było już bez znaczenia.
+
 ## Torby
 
 Obok broni, zbroi i talizmanu jest czwarty slot: **torba**. Założona torba
 poszerza plecak — bazowo 15 miejsc, maksymalnie 30. Torby są do kupienia
 w każdym sklepie i wypadają z potworów (najrzadszy typ dropu, a większe modele
-odblokowuje dopiero poziom przeciwnika).
+odblokowuje dopiero poziom przeciwnika). Modeli jest sześć — od `Mieszka` po
+`Kufer` z sześćdziesiątego piątego poziomu — a rzadkość dokłada od zera do
+trzech miejsc. Wypadają tylko trzy najświeższe modele: na dziewięćdziesiątym
+poziomie `Mieszek` byłby już tylko śmieciem.
 
 Zmiana torby na mniejszą albo jej zdjęcie jest **odrzucane**, jeśli w polach
 poza nowym rozmiarem leżą jeszcze przedmioty — nic nie ginie po cichu, gra
@@ -182,5 +217,8 @@ Schemat, zmienne środowiskowe i szczegóły migracji:
 | Komponenty Vue 3 | Komponenty React (te same klasy CSS) |
 | Docker Compose, Horizon, deploy przez GH Actions | Deploy na Vercelu |
 
-Zasady gry — obrażenia, krytyki, uniki, tabele dropów, ceny, progi poziomów,
-osiągnięcia — zostały przeniesione bez zmian.
+Zasady gry — obrażenia, krytyki, uniki, ceny, progi poziomów, osiągnięcia —
+zostały przeniesione bez zmian. Wyjątkiem jest łup: skalowanie dropu było
+liniowe, a przeciwników wykładnicze, więc obie krzywe się rozjeżdżały i po
+mniej więcej dwudziestym piątym poziomie łup przestawał mieć znaczenie.
+Opisuje to [Łup](#łup).
