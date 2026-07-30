@@ -5,9 +5,11 @@
  * instead of being rebuilt on every call like the PHP version did.
  */
 
-import { STAGES_PER_LOCATION } from './config';
+import { assetUrl } from './assets';
+import { MAX_BAG_SLOTS, STAGES_PER_LOCATION } from './config';
 import { ARENA_DIFFICULTY_META, ITEM_TYPE_LABELS, MAP_META, RARITY_META } from './enums';
 import { GameError } from './errors';
+import { bagBasesFor, createBagItem, createGearItem, gearTierFor } from './gear';
 import type {
     ArenaDifficultyValue,
     Enemy,
@@ -24,10 +26,6 @@ import type {
     Shop,
     Stage,
 } from './types';
-
-export function assetUrl(path: string): string {
-    return `/game-assets/${path}`;
-}
 
 function npc(
     id: string,
@@ -1369,101 +1367,69 @@ export const SHOPS: Record<string, Shop> = {
  * Stock that follows the player's level.
  *
  * The fixed entries above are hand-tuned for a level bracket and go stale once
- * you outgrow them. These templates instead restat and reprice themselves off
- * the current level, so every shop always carries usable baseline gear. Stats
- * grow slower than price, so the fixed items stay the more interesting buy.
+ * you outgrow them. This stock is cut from the same curve as the loot instead,
+ * so every shop always carries gear worth wearing at the level you walk in at —
+ * one plain and one unique piece per slot, plus the bag of the moment.
+ *
+ * It used to grow by a flat 12% a level while prices grew by 25%, which by the
+ * late game meant paying millions for a sword that a level 10 enemy would have
+ * dropped. The markup below is what keeps the loot worth picking up: buying is
+ * roughly six sold drops, so the shop is the floor and the drops are the climb.
  */
-export type ScaledShopTemplate = {
+const SHOP_PRICE_MARKUP = 3;
+
+/** Which base of the tier a shop stocks — first is the plainest of its type. */
+type ScaledSlot = {
     id: number;
-    name: string;
-    image: string;
-    type: ItemTypeValue;
+    type: 'weapon' | 'armor' | 'talisman';
     rarity: ItemRarityValue;
-    /** Stats at level 1. */
-    base: ItemStats;
-    /** Price at level 1. */
-    basePrice: number;
+    baseIndex: number;
 };
 
-const SCALED_STAT_GROWTH = 0.12;
-const SCALED_PRICE_GROWTH = 0.25;
-
-export const SCALED_SHOP_TEMPLATES: ScaledShopTemplate[] = [
-    {
-        id: 901,
-        name: 'Miecz Najemnika',
-        image: 'items/sword.gif',
-        type: 'weapon',
-        rarity: 'common',
-        base: { dmgMin: 4, dmgMax: 8 },
-        basePrice: 200,
-    },
-    {
-        id: 902,
-        name: 'Zaklęta Głownia',
-        image: 'items/dagger.gif',
-        type: 'weapon',
-        rarity: 'unique',
-        base: { dmgMin: 6, dmgMax: 11, critChance: 3 },
-        basePrice: 450,
-    },
-    {
-        id: 911,
-        name: 'Kuta Zbroja',
-        image: 'items/chainmail.gif',
-        type: 'armor',
-        rarity: 'common',
-        base: { armor: 8 },
-        basePrice: 220,
-    },
-    {
-        id: 912,
-        name: 'Zbroja Wędrowca',
-        image: 'items/plate.gif',
-        type: 'armor',
-        rarity: 'unique',
-        base: { armor: 12, hp: 15, dodge: 2 },
-        basePrice: 500,
-    },
-    {
-        id: 921,
-        name: 'Amulet Wędrowca',
-        image: 'items/amulet.gif',
-        type: 'talisman',
-        rarity: 'unique',
-        base: { hp: 20, critChance: 2, critPower: 10 },
-        basePrice: 550,
-    },
+const SCALED_SHOP_SLOTS: ScaledSlot[] = [
+    { id: 901, type: 'weapon', rarity: 'common', baseIndex: 0 },
+    { id: 902, type: 'weapon', rarity: 'unique', baseIndex: 1 },
+    { id: 911, type: 'armor', rarity: 'common', baseIndex: 0 },
+    { id: 912, type: 'armor', rarity: 'unique', baseIndex: 1 },
+    { id: 921, type: 'talisman', rarity: 'unique', baseIndex: 0 },
 ];
 
-function scaledShopItem(template: ScaledShopTemplate, playerLevel: number): Item {
+export function scaledShopItems(playerLevel: number): Item[] {
     const level = Math.max(1, playerLevel);
-    const statScale = 1 + (level - 1) * SCALED_STAT_GROWTH;
-    const priceScale = 1 + (level - 1) * SCALED_PRICE_GROWTH;
+    const tier = gearTierFor(level);
 
-    const stats: ItemStats = {};
-    for (const [key, value] of Object.entries(template.base)) {
-        stats[key as keyof ItemStats] = Math.max(1, Math.floor((value ?? 0) * statScale));
-    }
-
-    const item = shopItem(
-        template.id,
-        template.name,
-        template.image,
-        template.type,
-        template.rarity,
-        // Requirement tracks the player, so this gear is always equippable.
-        level,
-        stats,
-        Math.floor(template.basePrice * priceScale),
+    const items = SCALED_SHOP_SLOTS.map((slot) =>
+        createGearItem({
+            type: slot.type,
+            level,
+            rarity: slot.rarity,
+            base: tier[slot.type][slot.baseIndex % tier[slot.type].length],
+            // No quality roll: the shop window has to show the same item the
+            // purchase rebuilds, and a plain name reads better on a price tag.
+            prefixed: false,
+            priceFactor: SHOP_PRICE_MARKUP,
+            // Namespaced so a scaled entry can never collide with a fixed one.
+            id: `scaled_${slot.id}`,
+        }),
     );
 
-    // Namespaced so a scaled entry can never collide with a fixed one.
-    return { ...item, id: `scaled_${template.id}` };
-}
+    const bags = bagBasesFor(level);
 
-export function scaledShopItems(playerLevel: number): Item[] {
-    return SCALED_SHOP_TEMPLATES.map((template) => scaledShopItem(template, playerLevel));
+    items.push(
+        createBagItem({
+            level,
+            rarity: 'common',
+            // The largest model the level has unlocked, so the shop is always
+            // the reliable way to widen the backpack.
+            base: bags[bags.length - 1],
+            maxSlots: MAX_BAG_SLOTS,
+            prefixed: false,
+            priceFactor: SHOP_PRICE_MARKUP,
+            id: 'scaled_931',
+        }),
+    );
+
+    return items;
 }
 
 /** Every shop with its level-scaled stock appended to the fixed catalogue. */
@@ -1487,63 +1453,6 @@ export function shopsFor(playerLevel: number): Record<string, Shop> {
 export function getShopFor(playerLevel: number, shopId: string): Shop | null {
     return shopsFor(playerLevel)[shopId] ?? null;
 }
-
-export type ItemBase = {
-    name: string;
-    image: string;
-    dmgMin?: number;
-    dmgMax?: number;
-    armor?: number;
-    /** Bags only: extra backpack slots before the rarity multiplier. */
-    bagSlots?: number;
-    /**
-     * Bags only: the enemy level a drop must reach for this base to appear.
-     *
-     * Bags are permanent quality-of-life rather than a stat curve, so they are
-     * gated by level here instead of being scaled like weapons and armour.
-     */
-    minLevel?: number;
-    effect?: { type: string; value: number };
-};
-
-export const ITEM_BASES: Record<ItemTypeValue, ItemBase[]> = {
-    weapon: [
-        { name: 'Miecz', image: 'items/sword.gif', dmgMin: 2, dmgMax: 5 },
-        { name: 'Topór', image: 'items/axe.gif', dmgMin: 3, dmgMax: 7 },
-        { name: 'Sztylet', image: 'items/dagger.gif', dmgMin: 1, dmgMax: 4 },
-        { name: 'Młot', image: 'items/hammer.gif', dmgMin: 4, dmgMax: 8 },
-        { name: 'Włócznia', image: 'items/spear.gif', dmgMin: 2, dmgMax: 6 },
-    ],
-    armor: [
-        { name: 'Skórzana zbroja', image: 'items/leather.gif', armor: 3 },
-        { name: 'Kolczuga', image: 'items/chainmail.gif', armor: 6 },
-        { name: 'Zbroja płytowa', image: 'items/plate.gif', armor: 10 },
-        { name: 'Szata', image: 'items/robe.gif', armor: 4 },
-        { name: 'Peleryna', image: 'items/cloak.gif', armor: 2 },
-    ],
-    talisman: [
-        { name: 'Pierścień', image: 'items/ring.gif' },
-        { name: 'Amulet', image: 'items/amulet.gif' },
-        { name: 'Talizman', image: 'items/charm.gif' },
-        { name: 'Medal', image: 'items/medal.gif' },
-        { name: 'Runa', image: 'items/rune.gif' },
-    ],
-    potion: [{ name: 'Butelka PA', image: 'items/pa.gif', effect: { type: 'pa', value: 5 } }],
-    // Masculine names on purpose: `RARITY_PREFIXES` only carries the masculine
-    // form, so "Mocna Sakiewka" would come out as "Mocny Sakiewka".
-    bag: [
-        { name: 'Mieszek', image: 'items/bag_pouch.png', bagSlots: 2, minLevel: 1 },
-        { name: 'Worek podróżny', image: 'items/bag_sack.png', bagSlots: 4, minLevel: 8 },
-        { name: 'Tobołek wędrowca', image: 'items/bag_satchel.png', bagSlots: 6, minLevel: 18 },
-        { name: 'Plecak', image: 'items/bag_backpack.png', bagSlots: 8, minLevel: 28 },
-    ],
-};
-
-export const RARITY_PREFIXES: Partial<Record<ItemRarityValue, string[]>> = {
-    unique: ['Mocny', 'Wzmocniony', 'Zaklęty', 'Mistyczny'],
-    heroic: ['Bohaterski', 'Epicki', 'Potężny', 'Starożytny'],
-    legendary: ['Legendarny', 'Mityczny', 'Boski', 'Nieśmiertelny'],
-};
 
 export const BASE_DROP_CHANCES: Record<ItemRarityValue, number> = {
     common: 60,

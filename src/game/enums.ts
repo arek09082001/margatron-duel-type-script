@@ -40,46 +40,66 @@ export type RarityMeta = {
     label: string;
     color: string;
     cssClass: string;
+    /** Multiplier on the level curve — damage, armour and health. */
     statMultiplier: number;
+    /** Multiplier on the percentage bonus stats, which do not follow the curve. */
+    percentMultiplier: number;
     priceMultiplier: number;
     bonusStats: number;
+    /** Extra backpack slots on top of the bag model's own capacity. */
+    bagSlotBonus: number;
 };
 
 /** Ordered weakest → strongest; the drop roll walks this order. */
 export const ITEM_RARITIES: ItemRarityValue[] = ['common', 'unique', 'heroic', 'legendary'];
 
+/**
+ * The stat multipliers are deliberately tighter than the old 1,0 / 1,3 / 1,6 /
+ * 2,0. Gear grows by roughly 5,5% a level in the late game, so a doubling made a
+ * lucky legendary worth thirteen levels of progress and left everything found in
+ * between meaningless. At 1,7 it is still the best thing that can happen to a
+ * fight, just not the end of looting.
+ */
 export const RARITY_META: Record<ItemRarityValue, RarityMeta> = {
     common: {
         label: 'Zwykły',
         color: '#ffffff',
         cssClass: '',
         statMultiplier: 1.0,
+        percentMultiplier: 1.0,
         priceMultiplier: 1.0,
         bonusStats: 0,
+        bagSlotBonus: 0,
     },
     unique: {
         label: 'Unikalny',
         color: '#66cc66',
         cssClass: 'unique',
-        statMultiplier: 1.3,
+        statMultiplier: 1.18,
+        percentMultiplier: 1.1,
         priceMultiplier: 2.5,
         bonusStats: 1,
+        bagSlotBonus: 1,
     },
     heroic: {
         label: 'Heroiczny',
         color: '#2090fe',
         cssClass: 'heroic',
-        statMultiplier: 1.6,
+        statMultiplier: 1.4,
+        percentMultiplier: 1.25,
         priceMultiplier: 5.0,
         bonusStats: 2,
+        bagSlotBonus: 2,
     },
     legendary: {
         label: 'Legendarny',
         color: '#fa9a20',
         cssClass: 'legendary',
-        statMultiplier: 2.0,
+        statMultiplier: 1.7,
+        percentMultiplier: 1.45,
         priceMultiplier: 10.0,
         bonusStats: 3,
+        bagSlotBonus: 3,
     },
 };
 

@@ -54,15 +54,38 @@ export type BonusRow = {
     suffix: string;
 };
 
-/** Bonus stats for the tooltip, excluding the ones already shown as base stats. */
+/** Rows the tooltip lists under the base stats it already prints itself. */
+const BASE_STATS = ['dmgMin', 'dmgMax', 'armor', 'bagSlots'];
+
+/**
+ * Every stat worth a line in the tooltip.
+ *
+ * Reads `stats` as well as `bonusStats`: health is a base stat of armour and
+ * talismans, not a rarity roll, so a common talisman carries it in `stats`
+ * alone — listing only the bonus rolls left such an item looking empty.
+ */
 export function bonusRows(item: Item): BonusRow[] {
-    return Object.entries(item.bonusStats ?? {})
-        .filter(([key]) => !['dmgMin', 'dmgMax', 'armor', 'bagSlots'].includes(key))
-        .map(([key, stat]) => {
-            if (typeof stat === 'number') {
-                return { key, value: stat, name: statName(key), suffix: statSuffix(key) };
+    const values = new Map<string, number>();
+
+    for (const [key, value] of Object.entries(item.stats ?? {})) {
+        if (typeof value === 'number') {
+            values.set(key, value);
+        }
+    }
+
+    for (const [key, stat] of Object.entries(item.bonusStats ?? {})) {
+        values.set(key, typeof stat === 'number' ? stat : stat.value);
+    }
+
+    return [...values.entries()]
+        .filter(([key]) => !BASE_STATS.includes(key))
+        .map(([key, value]) => {
+            const bonus = item.bonusStats?.[key];
+
+            if (bonus && typeof bonus === 'object') {
+                return { key, value, name: bonus.name, suffix: bonus.suffix };
             }
 
-            return { key, value: stat.value, name: stat.name, suffix: stat.suffix };
+            return { key, value, name: statName(key), suffix: statSuffix(key) };
         });
 }
