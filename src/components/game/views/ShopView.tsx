@@ -48,7 +48,17 @@ export default function ShopView({
 
     return (
         <div className="inline-view shop-inline">
-            <div className="inline-header">{shop?.name ?? ''}</div>
+            <div className="inline-header">
+                {shop?.name ?? ''}
+                {/* A shop stocks its own land's ten levels, not the player's
+                    level, so the band belongs in the sign — otherwise gear you
+                    have outgrown looks like the shop being broken. */}
+                {shop && (
+                    <span className="shop-level-range">
+                        Poziom {shop.levelRange.min}–{shop.levelRange.max}
+                    </span>
+                )}
+            </div>
             <div
                 className="shop-main-content"
                 style={{
@@ -102,13 +112,15 @@ export default function ShopView({
                                             >
                                                 {item.name}
                                             </span>
-                                            {(item.level ?? 1) > 1 && (
-                                                <span className="item-level">Poz. {item.level}</span>
-                                            )}
+                                            <span
+                                                className={`item-level${cantUse ? ' too-high' : ''}`}
+                                            >
+                                                Poz. {item.level ?? 1}
+                                            </span>
                                             <span
                                                 className={`item-price${cantAfford ? ' no-gold' : ''}`}
                                             >
-                                                💰 {item.price}
+                                                💰 {formatNumber(item.price)}
                                             </span>
                                         </div>
                                     );
@@ -147,7 +159,7 @@ export default function ShopView({
                                                 <span className="item-qty">x{item.quantity}</span>
                                             )}
                                             <span className="item-price sell-price">
-                                                💰 {sellValue(item)}
+                                                💰 {formatNumber(sellValue(item))}
                                             </span>
                                         </div>
                                     ))}

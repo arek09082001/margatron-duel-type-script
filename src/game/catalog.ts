@@ -1,29 +1,25 @@
 /**
  * Port of `app/Game/Repositories/StaticGameCatalogRepository.php`.
  *
- * All content is static, so the maps/shops are built once at module load
- * instead of being rebuilt on every call like the PHP version did.
+ * All content is static, so the maps are built once at module load instead of
+ * being rebuilt on every call like the PHP version did. What each town *sells*
+ * lives in `shops.ts`, which this only reaches into for the sign over the door.
  */
 
 import { assetUrl } from './assets';
-import { MAX_BAG_SLOTS, STAGES_PER_LOCATION } from './config';
-import { ARENA_DIFFICULTY_META, ITEM_TYPE_LABELS, MAP_META, RARITY_META } from './enums';
+import { STAGES_PER_LOCATION } from './config';
+import { ARENA_DIFFICULTY_META, MAP_META } from './enums';
 import { GameError } from './errors';
-import { bagBasesFor, createBagItem, createGearItem, gearTierFor } from './gear';
+import { townShopId, townShopName } from './shops';
 import type {
     ArenaDifficultyValue,
     Enemy,
     EnemyGroup,
     GameLocation,
     GameMapData,
-    Item,
-    ItemRarityValue,
-    ItemStats,
-    ItemTypeValue,
     LocationTypeValue,
     Npc,
     ScaledEnemy,
-    Shop,
     Stage,
 } from './types';
 
@@ -88,17 +84,25 @@ function battle(
     });
 }
 
+/**
+ * A town's shop.
+ *
+ * Both the label and the `shopId` come from `shops.ts`, so the sign over the
+ * door cannot drift from the shelves behind it — and every town has its own,
+ * stocked for its own ten levels.
+ */
 function shopLocation(
     id: string,
-    name: string,
+    mapId: number,
     image: string,
     x: number,
     y: number,
     width: number,
     height: number,
-    shopId: string,
 ): GameLocation {
-    return location(id, name, 'shop', image, x, y, width, height, 1, { shopId });
+    return location(id, townShopName(mapId), 'shop', image, x, y, width, height, 1, {
+        shopId: townShopId(mapId),
+    });
 }
 
 function enemy(
@@ -119,46 +123,6 @@ function enemy(
         dmgMax,
         exp,
         gold,
-    };
-}
-
-function shopItem(
-    id: number,
-    name: string,
-    image: string,
-    type: ItemTypeValue,
-    rarity: ItemRarityValue,
-    level: number,
-    stats: ItemStats,
-    price: number,
-    effect: { type: string; value: number } | null = null,
-): Item {
-    const meta = RARITY_META[rarity];
-    const power = Math.max(1, Object.values(stats).reduce((total, value) => total + (value ?? 0), 0));
-
-    return {
-        id: String(id),
-        name,
-        icon: image,
-        image,
-        imageUrl: assetUrl(image),
-        type,
-        itemType: type,
-        itemTypeName: ITEM_TYPE_LABELS[type],
-        rarity,
-        rarityName: meta.label,
-        rarityColor: meta.color,
-        rarityCss: meta.cssClass,
-        level,
-        stats,
-        bonusStats: { ...stats },
-        effect: effect?.type ?? null,
-        effectValue: effect?.value ?? null,
-        effectData: effect,
-        power,
-        price,
-        quantity: 1,
-        ...stats,
     };
 }
 
@@ -219,7 +183,7 @@ const OLSZAWA: GameMapData = buildMap(1, {
         location('olszawa-arena', 'Arena', 'arena', '001.jpg', 22, 12, 4, 4, 1),
         location('olszawa-tough', 'Mocny przeciwnik', 'toughenemy', '025.jpg', 3.5, 5.5, 3, 3, 2),
         location('olszawa-inn', 'Zajazd pod Krzywą Osiką', 'rest', '025.jpg', 12, 10.5, 4, 3, 1),
-        shopLocation('olszawa-shop', 'Kuźnia', '001.jpg', 4, 11.5, 4, 3, 'blacksmith_1'),
+        shopLocation('olszawa-shop', 1, '001.jpg', 4, 11.5, 4, 3),
         location('olszawa-world', 'Mapa Świata', 'worldmap', '', 12.5, 15, 3, 2, 1),
     ],
     enemies: {
@@ -272,7 +236,7 @@ const RUDZIN: GameMapData = buildMap(2, {
         location('rudzin-arena', 'Arena', 'arena', '030.jpg', 22, 2.5, 4, 3, 3, { levelReq: 9 }),
         location('rudzin-tough', 'Mocny przeciwnik', 'toughenemy', '009.jpg', 2.5, 13.5, 3, 3, 2),
         location('rudzin-inn', 'Karczma pod Miedzianym Dzbanem', 'rest', '025.jpg', 17, 9.5, 4, 3, 1),
-        shopLocation('rudzin-shop', 'Kuźnia', '001.jpg', 8, 9.5, 4, 3, 'blacksmith_2'),
+        shopLocation('rudzin-shop', 2, '001.jpg', 8, 9.5, 4, 3),
         location('rudzin-world', 'Mapa Świata', 'worldmap', '', 12.5, 15, 3, 2, 1),
     ],
     enemies: {
@@ -337,7 +301,7 @@ const WIELGRAD: GameMapData = buildMap(3, {
         location('wielgrad-arena', 'Arena', 'arena', '001.jpg', 21.5, 11, 5, 4, 3, { levelReq: 20 }),
         location('wielgrad-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 2.5, 10.5, 3, 3, 2),
         location('wielgrad-inn', 'Gospoda Rzeczna', 'rest', '025.jpg', 8, 12.5, 4, 3, 1),
-        shopLocation('wielgrad-shop', 'Zbrojownia', '001.jpg', 17, 12.5, 4, 3, 'blacksmith_2'),
+        shopLocation('wielgrad-shop', 3, '001.jpg', 17, 12.5, 4, 3),
         location('wielgrad-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -416,7 +380,7 @@ const CZARNOBOR: GameMapData = buildMap(4, {
         location('czarnobor-arena', 'Arena', 'arena', '001.jpg', 11.5, 2.5, 5, 3, 3, { levelReq: 35 }),
         location('czarnobor-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 2.5, 13.5, 3, 3, 2),
         location('czarnobor-inn', 'Karczma Traperów', 'rest', '025.jpg', 17, 6.5, 4, 3, 1),
-        shopLocation('czarnobor-shop', 'Skład Traperski', '001.jpg', 8, 6.5, 4, 3, 'blacksmith_3'),
+        shopLocation('czarnobor-shop', 4, '001.jpg', 8, 6.5, 4, 3),
         location('czarnobor-world', 'Mapa Świata', 'worldmap', '', 12.5, 14, 3, 2, 1),
     ],
     enemies: {
@@ -498,7 +462,7 @@ const SOLWAR: GameMapData = buildMap(5, {
         location('solwar-arena', 'Arena', 'arena', '030.jpg', 21.5, 11, 5, 4, 3, { levelReq: 40 }),
         location('solwar-tough', 'Mocny przeciwnik', 'toughenemy', '013.jpg', 2.5, 10.5, 3, 3, 3),
         location('solwar-inn', 'Gospoda pod Latarnią', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
-        shopLocation('solwar-shop', 'Skład Portowy', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_4'),
+        shopLocation('solwar-shop', 5, '001.jpg', 6, 5.5, 4, 3),
         location('solwar-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -562,7 +526,7 @@ const NIHRAST: GameMapData = buildMap(6, {
         location('nihrast-arena', 'Arena', 'arena', '001.jpg', 21.5, 13, 5, 4, 3, { levelReq: 50 }),
         location('nihrast-tough', 'Mocny przeciwnik', 'toughenemy', '022.jpg', 2.5, 12.5, 3, 3, 3),
         location('nihrast-inn', 'Karczma Popielna', 'rest', '025.jpg', 19, 6.5, 4, 3, 1),
-        shopLocation('nihrast-shop', 'Kuźnia Żarowa', '001.jpg', 6, 6.5, 4, 3, 'blacksmith_4'),
+        shopLocation('nihrast-shop', 6, '001.jpg', 6, 6.5, 4, 3),
         location('nihrast-temple', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -626,7 +590,7 @@ const ZHURMAT: GameMapData = buildMap(7, {
         location('zhurmat-arena', 'Arena', 'arena', '030.jpg', 21.5, 13, 5, 4, 3, { levelReq: 60 }),
         location('zhurmat-tough', 'Mocny przeciwnik', 'toughenemy', '011.jpg', 2.5, 12.5, 3, 3, 3),
         location('zhurmat-inn', 'Karczma Karawan', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
-        shopLocation('zhurmat-shop', 'Bazar Zhurmatu', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_5'),
+        shopLocation('zhurmat-shop', 7, '001.jpg', 6, 5.5, 4, 3),
         location('zhurmat-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -690,7 +654,7 @@ const GRZMIEL: GameMapData = buildMap(8, {
         location('grzmiel-arena', 'Arena', 'arena', '001.jpg', 21.5, 13, 5, 4, 3, { levelReq: 70 }),
         location('grzmiel-tough', 'Mocny przeciwnik', 'toughenemy', '035.jpg', 2.5, 12.5, 3, 3, 3),
         location('grzmiel-inn', 'Gospoda pod Kuszą', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
-        shopLocation('grzmiel-shop', 'Płatnerz', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_5'),
+        shopLocation('grzmiel-shop', 8, '001.jpg', 6, 5.5, 4, 3),
         location('grzmiel-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -754,7 +718,7 @@ const ISMERIA: GameMapData = buildMap(9, {
         location('ismeria-arena', 'Arena', 'arena', '030.jpg', 21.5, 12, 5, 4, 3, { levelReq: 80 }),
         location('ismeria-tough', 'Mocny przeciwnik', 'toughenemy', '028.jpg', 2.5, 11.5, 3, 3, 3),
         location('ismeria-inn', 'Karczma pod Szronem', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
-        shopLocation('ismeria-shop', 'Zbrojownia Wygnańców', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_6'),
+        shopLocation('ismeria-shop', 9, '001.jpg', 6, 5.5, 4, 3),
         location('ismeria-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -818,7 +782,7 @@ const ZORYAN: GameMapData = buildMap(10, {
         location('zoryan-arena', 'Arena', 'arena', '001.jpg', 21.5, 13, 5, 4, 3, { levelReq: 90 }),
         location('zoryan-tough', 'Mocny przeciwnik', 'toughenemy', '034.jpg', 2.5, 12.5, 3, 3, 3),
         location('zoryan-inn', 'Gospoda Ostatniego Świtu', 'rest', '025.jpg', 19, 5.5, 4, 3, 1),
-        shopLocation('zoryan-shop', 'Skarbiec Zoryanu', '001.jpg', 6, 5.5, 4, 3, 'blacksmith_6'),
+        shopLocation('zoryan-shop', 10, '001.jpg', 6, 5.5, 4, 3),
         location('zoryan-world', 'Mapa Świata', 'worldmap', '', 12.5, 2, 3, 2, 1),
     ],
     enemies: {
@@ -869,673 +833,6 @@ export const WORLD_MAP_POSITIONS: Array<{ id: number; x: number; y: number }> = 
     { id: 10, x: 55, y: 35 },
 ];
 
-export const POTION_EFFECT_RANGES: Record<string, Record<ItemRarityValue, [number, number]>> = {
-    pa: {
-        common: [5, 5],
-        unique: [5, 10],
-        heroic: [10, 20],
-        legendary: [25, 25],
-    },
-};
-
-/**
- * The two largest bags, carried by every shop from Czarnobór on.
- *
- * Shared rather than copied so the late-game shops cannot drift apart on the
- * one item a player is guaranteed to want.
- */
-const HIGH_TIER_BAGS: Item[] = [
-    shopItem(
-        731,
-        'Plecak Poszukiwacza',
-        'items/bag_backpack.png',
-        'bag',
-        'heroic',
-        30,
-        { bagSlots: 12 },
-        40000,
-    ),
-    // The ceiling: `MAX_BAG_SLOTS` on top of the base backpack.
-    shopItem(
-        732,
-        'Bezdenny Plecak',
-        'items/bag_backpack.png',
-        'bag',
-        'legendary',
-        38,
-        { bagSlots: 15 },
-        200000,
-    ),
-];
-
-export const SHOPS: Record<string, Shop> = {
-    blacksmith_1: {
-        id: 'blacksmith_1',
-        name: 'Sklep',
-        items: [
-            shopItem(201, 'Miecz żelazny', 'items/sword.gif', 'weapon', 'common', 1, { dmgMin: 3, dmgMax: 7 }, 150),
-            shopItem(202, 'Topór wojenny', 'items/axe.gif', 'weapon', 'common', 3, { dmgMin: 5, dmgMax: 10 }, 300),
-            shopItem(
-                203,
-                'Wzmocniony Sztylet',
-                'items/dagger.gif',
-                'weapon',
-                'unique',
-                5,
-                { dmgMin: 4, dmgMax: 8, critChance: 3 },
-                450,
-            ),
-            shopItem(211, 'Skórzana zbroja', 'items/leather.gif', 'armor', 'common', 1, { armor: 5 }, 100),
-            shopItem(212, 'Kolczuga', 'items/chainmail.gif', 'armor', 'common', 4, { armor: 12 }, 250),
-            shopItem(
-                213,
-                'Błogosławiona Peleryna',
-                'items/cloak.gif',
-                'armor',
-                'unique',
-                5,
-                { armor: 8, dodge: 2 },
-                400,
-            ),
-            shopItem(221, 'Pierścień Wojownika', 'items/ring.gif', 'talisman', 'common', 2, { hp: 10 }, 120),
-            shopItem(
-                222,
-                'Mistyczny Amulet',
-                'items/amulet.gif',
-                'talisman',
-                'unique',
-                6,
-                { critChance: 2, hp: 15 },
-                500,
-            ),
-
-            // Bags. Priced well above gear of the same level: the backpack is
-            // the thing that limits how long a player can stay out farming, so
-            // widening it should cost a few expeditions' worth of gold.
-            shopItem(231, 'Sakiewka', 'items/bag_pouch.png', 'bag', 'common', 1, { bagSlots: 3 }, 400),
-            shopItem(
-                232,
-                'Worek podróżny',
-                'items/bag_sack.png',
-                'bag',
-                'unique',
-                6,
-                { bagSlots: 5 },
-                1600,
-            ),
-        ],
-    },
-    blacksmith_2: {
-        id: 'blacksmith_2',
-        name: 'Sklep',
-        items: [
-            shopItem(401, 'Mroczny Miecz', 'items/sword.gif', 'weapon', 'common', 10, { dmgMin: 12, dmgMax: 20 }, 800),
-            shopItem(402, 'Topór Cienia', 'items/axe.gif', 'weapon', 'common', 12, { dmgMin: 15, dmgMax: 25 }, 1200),
-            shopItem(
-                403,
-                'Bohaterski Młot',
-                'items/hammer.gif',
-                'weapon',
-                'heroic',
-                15,
-                { dmgMin: 18, dmgMax: 30, critChance: 5, critPower: 15 },
-                2500,
-            ),
-            shopItem(
-                404,
-                'Legendarny Miecz Zagłady',
-                'items/sword.gif',
-                'weapon',
-                'legendary',
-                18,
-                { dmgMin: 25, dmgMax: 40, critChance: 8, critPower: 25, doubleDamage: 5 },
-                8000,
-            ),
-            shopItem(411, 'Zbroja Cieni', 'items/plate.gif', 'armor', 'common', 10, { armor: 25 }, 900),
-            shopItem(
-                412,
-                'Epicki Pancerz Strażnika',
-                'items/plate.gif',
-                'armor',
-                'heroic',
-                15,
-                { armor: 35, hp: 30, dodge: 3 },
-                3000,
-            ),
-            shopItem(
-                413,
-                'Nieśmiertelna Zbroja',
-                'items/plate.gif',
-                'armor',
-                'legendary',
-                18,
-                { armor: 50, hp: 50, dodge: 5, doubleArmor: 5 },
-                10000,
-            ),
-            shopItem(
-                421,
-                'Potężny Pierścień',
-                'items/ring.gif',
-                'talisman',
-                'heroic',
-                14,
-                { critChance: 4, critPower: 12 },
-                1500,
-            ),
-            shopItem(
-                422,
-                'Mityczny Amulet Mocy',
-                'items/amulet.gif',
-                'talisman',
-                'legendary',
-                18,
-                { hp: 40, critChance: 6, stun: 3 },
-                5000,
-            ),
-
-            // Mid-game tiers around level 15/20/25.
-            //
-            // This shop serves both Rudzin (level 9+) and Wielgrad (level 20+),
-            // so it is the only stock a level 20-30 player can actually reach —
-            // blacksmith_3 sits in Czarnobór behind a level 30 gate. Its range used
-            // to stop at 18, leaving that stretch with nothing to buy.
-            shopItem(
-                405,
-                'Ostrze Zmierzchu',
-                'items/dagger.gif',
-                'weapon',
-                'unique',
-                15,
-                { dmgMin: 20, dmgMax: 34, critChance: 6 },
-                3000,
-            ),
-            shopItem(
-                423,
-                'Talizman Strażnika',
-                'items/charm.gif',
-                'talisman',
-                'heroic',
-                15,
-                { hp: 45, dodge: 4, stun: 2 },
-                2200,
-            ),
-            shopItem(
-                406,
-                'Topór Górskiego Klanu',
-                'items/axe.gif',
-                'weapon',
-                'heroic',
-                20,
-                { dmgMin: 32, dmgMax: 52, critChance: 7, critPower: 22 },
-                5500,
-            ),
-            shopItem(
-                414,
-                'Kirys Smoczej Straży',
-                'items/plate.gif',
-                'armor',
-                'heroic',
-                20,
-                { armor: 58, hp: 60, dodge: 5 },
-                7000,
-            ),
-            shopItem(
-                424,
-                'Pierścień Wichru',
-                'items/ring.gif',
-                'talisman',
-                'heroic',
-                20,
-                { hp: 70, critChance: 6, critPower: 20 },
-                6000,
-            ),
-            shopItem(
-                407,
-                'Halabarda Zaćmienia',
-                'items/spear.gif',
-                'weapon',
-                'legendary',
-                25,
-                { dmgMin: 55, dmgMax: 85, critChance: 9, critPower: 30, doubleDamage: 6 },
-                14000,
-            ),
-            shopItem(
-                415,
-                'Zbroja Górskiego Klanu',
-                'items/chainmail.gif',
-                'armor',
-                'heroic',
-                25,
-                { armor: 78, hp: 85, dodge: 6 },
-                13000,
-            ),
-            shopItem(
-                425,
-                'Amulet Zaćmienia',
-                'items/amulet.gif',
-                'talisman',
-                'legendary',
-                25,
-                { hp: 120, critChance: 8, critPower: 30, stun: 4 },
-                20000,
-            ),
-
-            shopItem(
-                431,
-                'Wzmocniony Worek',
-                'items/bag_sack.png',
-                'bag',
-                'unique',
-                12,
-                { bagSlots: 7 },
-                4500,
-            ),
-            shopItem(
-                432,
-                'Torba wędrowca',
-                'items/bag_satchel.png',
-                'bag',
-                'heroic',
-                20,
-                { bagSlots: 10 },
-                13000,
-            ),
-        ],
-    },
-    blacksmith_3: {
-        id: 'blacksmith_3',
-        name: 'Sklep',
-        items: [
-            shopItem(
-                601,
-                'Smocza Kosa',
-                'items/spear.gif',
-                'weapon',
-                'heroic',
-                20,
-                { dmgMin: 30, dmgMax: 50, critChance: 7, critPower: 20 },
-                5000,
-            ),
-            shopItem(
-                602,
-                'Boski Miecz Zagłady',
-                'items/sword.gif',
-                'weapon',
-                'legendary',
-                25,
-                { dmgMin: 45, dmgMax: 70, critChance: 12, critPower: 35, doubleDamage: 8 },
-                15000,
-            ),
-            shopItem(
-                611,
-                'Smocza Łuska',
-                'items/plate.gif',
-                'armor',
-                'legendary',
-                22,
-                { armor: 70, hp: 80, dodge: 7, doubleArmor: 8 },
-                18000,
-            ),
-
-            // Endgame chase items. Deliberately far above the rest of the
-            // catalogue in both power and price, so they stay a long-term gold
-            // sink rather than a routine upgrade. Crit chance stays modest
-            // because `recalculate` caps it at 50%; the budget goes into
-            // damage, armour and HP, which are uncapped.
-            shopItem(
-                701,
-                'Kosa Zapomnianego Króla',
-                'items/spear.gif',
-                'weapon',
-                'legendary',
-                30,
-                { dmgMin: 90, dmgMax: 140, critChance: 10, critPower: 50, doubleDamage: 10 },
-                55000,
-            ),
-            shopItem(
-                702,
-                'Ostrze Końca Świata',
-                'items/sword.gif',
-                'weapon',
-                'legendary',
-                35,
-                { dmgMin: 140, dmgMax: 210, critChance: 12, critPower: 70, doubleDamage: 15 },
-                120000,
-            ),
-            shopItem(
-                711,
-                'Pancerz Wiecznego Świtu',
-                'items/plate.gif',
-                'armor',
-                'legendary',
-                33,
-                { armor: 120, hp: 200, dodge: 10, doubleArmor: 10 },
-                90000,
-            ),
-            shopItem(
-                721,
-                'Serce Praojców',
-                'items/amulet.gif',
-                'talisman',
-                'legendary',
-                38,
-                { hp: 300, critChance: 10, critPower: 60, stun: 8 },
-                250000,
-            ),
-
-            ...HIGH_TIER_BAGS,
-        ],
-    },
-
-    // ================= Late game =================
-    //
-    // One shop per two lands, the same way `blacksmith_2` serves Rudzin and
-    // Wielgrad. Each carries two tiers: gear for the first land it serves and
-    // gear for the second. Stats keep the curve the earlier shops draw —
-    // weapons roughly ×1.7 per ten levels, armour ×1.7, health ×1.8 — because
-    // enemy damage rises with the level multiplier and armour plus health are
-    // the only things that answer it.
-    blacksmith_4: {
-        id: 'blacksmith_4',
-        name: 'Sklep',
-        items: [
-            shopItem(
-                801,
-                'Kosa Zmierzchu',
-                'items/spear.gif',
-                'weapon',
-                'heroic',
-                42,
-                { dmgMin: 260, dmgMax: 390, critChance: 10, critPower: 60 },
-                150000,
-            ),
-            shopItem(
-                811,
-                'Zbroja Otchłani',
-                'items/plate.gif',
-                'armor',
-                'heroic',
-                42,
-                { armor: 220, hp: 700, dodge: 10 },
-                160000,
-            ),
-            shopItem(
-                821,
-                'Amulet Otchłani',
-                'items/amulet.gif',
-                'talisman',
-                'heroic',
-                45,
-                { hp: 800, critChance: 10, critPower: 60, stun: 8 },
-                150000,
-            ),
-            shopItem(
-                802,
-                'Ostrze Nihrastu',
-                'items/sword.gif',
-                'weapon',
-                'legendary',
-                52,
-                { dmgMin: 430, dmgMax: 650, critChance: 12, critPower: 70, doubleDamage: 12 },
-                500000,
-            ),
-            shopItem(
-                812,
-                'Pancerz Nihrastu',
-                'items/plate.gif',
-                'armor',
-                'legendary',
-                52,
-                { armor: 360, hp: 1200, dodge: 12, doubleArmor: 12 },
-                520000,
-            ),
-            shopItem(
-                822,
-                'Runa Nihrastu',
-                'items/rune.gif',
-                'talisman',
-                'legendary',
-                55,
-                { hp: 1400, critChance: 12, critPower: 70, stun: 10 },
-                500000,
-            ),
-            ...HIGH_TIER_BAGS,
-        ],
-    },
-    blacksmith_5: {
-        id: 'blacksmith_5',
-        name: 'Sklep',
-        items: [
-            shopItem(
-                901,
-                'Trójząb Zhurmatu',
-                'items/spear.gif',
-                'weapon',
-                'heroic',
-                62,
-                { dmgMin: 790, dmgMax: 1185, critChance: 12, critPower: 80 },
-                1500000,
-            ),
-            shopItem(
-                911,
-                'Kirys Zhurmatu',
-                'items/plate.gif',
-                'armor',
-                'heroic',
-                62,
-                { armor: 650, hp: 2250, dodge: 12 },
-                1600000,
-            ),
-            shopItem(
-                921,
-                'Medalion Zhurmatu',
-                'items/medal.gif',
-                'talisman',
-                'heroic',
-                65,
-                { hp: 2700, critChance: 12, critPower: 80, stun: 10 },
-                1500000,
-            ),
-            shopItem(
-                902,
-                'Młot Grzmiela',
-                'items/hammer.gif',
-                'weapon',
-                'legendary',
-                72,
-                { dmgMin: 1200, dmgMax: 1800, critChance: 14, critPower: 90, doubleDamage: 14 },
-                5000000,
-            ),
-            shopItem(
-                912,
-                'Zbroja Grzmiela',
-                'items/plate.gif',
-                'armor',
-                'legendary',
-                72,
-                { armor: 1000, hp: 3400, dodge: 14, doubleArmor: 14 },
-                5200000,
-            ),
-            shopItem(
-                922,
-                'Pierścień Grzmiela',
-                'items/ring.gif',
-                'talisman',
-                'legendary',
-                75,
-                { hp: 4000, critChance: 14, critPower: 90, stun: 12 },
-                5000000,
-            ),
-            ...HIGH_TIER_BAGS,
-        ],
-    },
-    blacksmith_6: {
-        id: 'blacksmith_6',
-        name: 'Sklep',
-        items: [
-            shopItem(
-                1001,
-                'Kosa Hilaii',
-                'items/spear.gif',
-                'weapon',
-                'heroic',
-                82,
-                { dmgMin: 2000, dmgMax: 3000, critChance: 14, critPower: 100 },
-                15000000,
-            ),
-            shopItem(
-                1011,
-                'Pancerz Hilaii',
-                'items/plate.gif',
-                'armor',
-                'heroic',
-                82,
-                { armor: 1700, hp: 5800, dodge: 14 },
-                16000000,
-            ),
-            shopItem(
-                1021,
-                'Talizman Hilaii',
-                'items/charm.gif',
-                'talisman',
-                'heroic',
-                85,
-                { hp: 6800, critChance: 14, critPower: 100, stun: 12 },
-                15000000,
-            ),
-            shopItem(
-                1002,
-                'Ostrze Elizji',
-                'items/sword.gif',
-                'weapon',
-                'legendary',
-                92,
-                { dmgMin: 3400, dmgMax: 5100, critChance: 16, critPower: 110, doubleDamage: 16 },
-                50000000,
-            ),
-            shopItem(
-                1012,
-                'Pancerz Elizji',
-                'items/plate.gif',
-                'armor',
-                'legendary',
-                92,
-                { armor: 2900, hp: 9900, dodge: 16, doubleArmor: 16 },
-                52000000,
-            ),
-            shopItem(
-                1022,
-                'Serce Elizji',
-                'items/amulet.gif',
-                'talisman',
-                'legendary',
-                95,
-                { hp: 11600, critChance: 16, critPower: 110, stun: 14 },
-                50000000,
-            ),
-            ...HIGH_TIER_BAGS,
-        ],
-    },
-};
-
-/**
- * Stock that follows the player's level.
- *
- * The fixed entries above are hand-tuned for a level bracket and go stale once
- * you outgrow them. This stock is cut from the same curve as the loot instead,
- * so every shop always carries gear worth wearing at the level you walk in at —
- * one plain and one unique piece per slot, plus the bag of the moment.
- *
- * It used to grow by a flat 12% a level while prices grew by 25%, which by the
- * late game meant paying millions for a sword that a level 10 enemy would have
- * dropped. The markup below is what keeps the loot worth picking up: buying is
- * roughly six sold drops, so the shop is the floor and the drops are the climb.
- */
-const SHOP_PRICE_MARKUP = 3;
-
-/** Which base of the tier a shop stocks — first is the plainest of its type. */
-type ScaledSlot = {
-    id: number;
-    type: 'weapon' | 'armor' | 'talisman';
-    rarity: ItemRarityValue;
-    baseIndex: number;
-};
-
-const SCALED_SHOP_SLOTS: ScaledSlot[] = [
-    { id: 901, type: 'weapon', rarity: 'common', baseIndex: 0 },
-    { id: 902, type: 'weapon', rarity: 'unique', baseIndex: 1 },
-    { id: 911, type: 'armor', rarity: 'common', baseIndex: 0 },
-    { id: 912, type: 'armor', rarity: 'unique', baseIndex: 1 },
-    { id: 921, type: 'talisman', rarity: 'unique', baseIndex: 0 },
-];
-
-export function scaledShopItems(playerLevel: number): Item[] {
-    const level = Math.max(1, playerLevel);
-    const tier = gearTierFor(level);
-
-    const items = SCALED_SHOP_SLOTS.map((slot) =>
-        createGearItem({
-            type: slot.type,
-            level,
-            rarity: slot.rarity,
-            base: tier[slot.type][slot.baseIndex % tier[slot.type].length],
-            // No quality roll: the shop window has to show the same item the
-            // purchase rebuilds, and a plain name reads better on a price tag.
-            prefixed: false,
-            priceFactor: SHOP_PRICE_MARKUP,
-            // Namespaced so a scaled entry can never collide with a fixed one.
-            id: `scaled_${slot.id}`,
-        }),
-    );
-
-    const bags = bagBasesFor(level);
-
-    items.push(
-        createBagItem({
-            level,
-            rarity: 'common',
-            // The largest model the level has unlocked, so the shop is always
-            // the reliable way to widen the backpack.
-            base: bags[bags.length - 1],
-            maxSlots: MAX_BAG_SLOTS,
-            prefixed: false,
-            priceFactor: SHOP_PRICE_MARKUP,
-            id: 'scaled_931',
-        }),
-    );
-
-    return items;
-}
-
-/** Every shop with its level-scaled stock appended to the fixed catalogue. */
-export function shopsFor(playerLevel: number): Record<string, Shop> {
-    const scaled = scaledShopItems(playerLevel);
-    const shops: Record<string, Shop> = {};
-
-    for (const [shopId, shop] of Object.entries(SHOPS)) {
-        shops[shopId] = { ...shop, items: [...shop.items, ...scaled] };
-    }
-
-    return shops;
-}
-
-/**
- * Resolves a shop the same way the snapshot does.
- *
- * Buying must go through this rather than `getShop`, otherwise level-scaled
- * items would be visible in the UI but rejected as unknown at purchase time.
- */
-export function getShopFor(playerLevel: number, shopId: string): Shop | null {
-    return shopsFor(playerLevel)[shopId] ?? null;
-}
-
-export const BASE_DROP_CHANCES: Record<ItemRarityValue, number> = {
-    common: 60,
-    unique: 25,
-    heroic: 12,
-    legendary: 3,
-};
-
 export function getMap(mapId: number): GameMapData {
     const map = MAPS[mapId];
 
@@ -1544,10 +841,6 @@ export function getMap(mapId: number): GameMapData {
     }
 
     return map;
-}
-
-export function getShop(shopId: string): Shop | null {
-    return SHOPS[shopId] ?? null;
 }
 
 export function getLocation(mapId: number, locationId: string): GameLocation | null {

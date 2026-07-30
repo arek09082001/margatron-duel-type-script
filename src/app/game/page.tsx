@@ -306,10 +306,13 @@ export default function GamePage() {
     }
 
     function buyItem(item: Item): void {
-        if (!shopId || user.gold < item.price || (item.level ?? 1) > user.level) {
+        if (!shopId) {
             return;
         }
 
+        // No price or level check here: `buyItem` enforces both and says why, and
+        // a shop now shows its town's whole level band. Swallowing the click left
+        // the top half of every shelf looking simply dead.
         void run(() => store.buyItem(shopId, item.shopItemId ?? item.id));
     }
 

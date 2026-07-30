@@ -522,6 +522,15 @@
   text-shadow: 2px 2px 4px #000;
 }
 
+.shop-level-range {
+  display: block;
+  margin-top: 2px;
+  color: #b9a97a;
+  font-family: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
 .inline-footer {
   padding: 10px;
   background: rgba(0, 0, 0, 0.9);
@@ -1311,6 +1320,9 @@ b.enemy-attack { color: red; }
 .shop-row .item-name.heroic { color: #2090FE; }
 .shop-row .item-name.legendary { color: #FA9A20; }
 .shop-row .item-level { color: #888; font-size: 0.8rem; margin-right: 15px; }
+/* The shelf runs past what the player can wear, so the requirement has to be
+   readable at a glance, not just implied by the row being dimmed. */
+.shop-row .item-level.too-high { color: #f4776b; font-weight: bold; }
 .shop-row .item-qty { color: #aaa; font-size: 0.85rem; margin-right: 15px; }
 .shop-row .item-price { color: #ffd700; font-weight: bold; }
 .shop-row .item-price.no-gold { color: #f44336; }

@@ -14,7 +14,7 @@
 import { assetUrl } from './assets';
 import { ITEM_TYPE_LABELS, RARITY_META } from './enums';
 import { armorBudget, healthBudget, itemValueBudget, weaponDamageBudget } from './gearCurve';
-import { pick, randomId, randomInt, shuffled } from './rng';
+import { LIVE_RANDOM, type RandomSource, randomId } from './rng';
 import type { BonusStat, Item, ItemRarityValue, ItemStats, StatKey } from './types';
 
 /** The three types built from the level curve; potions and bags are their own thing. */
@@ -114,6 +114,52 @@ const WEAPON_SHAPES: Record<string, ShapeProfile> = {
         health: 0,
         affinity: ['critPower'],
     },
+    saber: {
+        noun: 'Szabla',
+        gender: 'f',
+        damage: 0.96,
+        spread: 0.26,
+        armor: 0,
+        health: 0,
+        affinity: ['critChance', 'critPower'],
+    },
+    flail: { noun: 'Kiścień', gender: 'm', damage: 1.06, spread: 0.4, armor: 0, health: 0, affinity: ['stun'] },
+    halberd: {
+        noun: 'Berdysz',
+        gender: 'm',
+        damage: 1.1,
+        spread: 0.36,
+        armor: 0,
+        health: 0,
+        affinity: ['critPower'],
+    },
+    staff: {
+        noun: 'Kostur',
+        gender: 'm',
+        damage: 0.86,
+        spread: 0.24,
+        armor: 0,
+        health: 0,
+        affinity: ['stun', 'critPower'],
+    },
+    trident: {
+        noun: 'Trójząb',
+        gender: 'm',
+        damage: 1.04,
+        spread: 0.3,
+        armor: 0,
+        health: 0,
+        affinity: ['critChance'],
+    },
+    warpick: {
+        noun: 'Nadziak',
+        gender: 'm',
+        damage: 0.98,
+        spread: 0.22,
+        armor: 0,
+        health: 0,
+        affinity: ['critPower', 'stun'],
+    },
 };
 
 /** Cloth trades armour for health, plate the other way round. */
@@ -134,6 +180,18 @@ const ARMOR_SHAPES: Record<string, ShapeProfile> = {
     cuirass: { noun: 'Kirys', gender: 'm', damage: 0, spread: 0, armor: 1.2, health: 0.28, affinity: ['stun'] },
     cloak: { noun: 'Peleryna', gender: 'f', damage: 0, spread: 0, armor: 0.65, health: 0.45, affinity: ['dodge'] },
     plate: { noun: 'Pancerz', gender: 'm', damage: 0, spread: 0, armor: 1.3, health: 0.25, affinity: ['stun'] },
+    scale: { noun: 'Karacena', gender: 'f', damage: 0, spread: 0, armor: 1.08, health: 0.35, affinity: ['stun'] },
+    brigandine: {
+        noun: 'Brygantyna',
+        gender: 'f',
+        damage: 0,
+        spread: 0,
+        armor: 0.92,
+        health: 0.4,
+        affinity: ['dodge'],
+    },
+    bechter: { noun: 'Bechter', gender: 'm', damage: 0, spread: 0, armor: 1.15, health: 0.3, affinity: ['stun'] },
+    tunic: { noun: 'Tunika', gender: 'f', damage: 0, spread: 0, armor: 0.66, health: 0.5, affinity: ['dodge'] },
 };
 
 /** Talismans carry the larger half of the health budget and pick a percentage. */
@@ -178,6 +236,26 @@ const TALISMAN_SHAPES: Record<string, ShapeProfile> = {
         affinity: ['dodge', 'critChance'],
     },
     heart: { noun: 'Serce', gender: 'n', damage: 0, spread: 0, armor: 0, health: 0.85, affinity: ['stun'] },
+    pendant: {
+        noun: 'Wisior',
+        gender: 'm',
+        damage: 0,
+        spread: 0,
+        armor: 0,
+        health: 0.6,
+        affinity: ['critPower'],
+    },
+    sigil: { noun: 'Pieczęć', gender: 'f', damage: 0, spread: 0, armor: 0, health: 0.62, affinity: ['stun'] },
+    fang: { noun: 'Kieł', gender: 'm', damage: 0, spread: 0, armor: 0, health: 0.48, affinity: ['critChance'] },
+    orb: {
+        noun: 'Sfera',
+        gender: 'f',
+        damage: 0,
+        spread: 0,
+        armor: 0,
+        health: 0.7,
+        affinity: ['critPower', 'dodge'],
+    },
 };
 
 const SHAPES: Record<GearTypeValue, Record<string, ShapeProfile>> = {
@@ -213,57 +291,65 @@ function gearTier(
  * One tier per land, and the shapes rotate as you climb so the backpack keeps
  * looking different — Olszawa hands out clubs and rusty daggers, Zoryan hands out
  * greatswords and hearts.
+ *
+ * Five weapons, four armours and three talismans each. It used to be three, two
+ * and two, which meant a land handed out the same three swords for ten levels;
+ * with five shapes and a quality roll on top, two drops of the same level are
+ * rarely the same item.
+ *
+ * The table is mirrored by `TIER_SHAPES` in `tools/gear-art/build.py`, which
+ * draws one icon per entry — `build.py --check` fails on a shape with no art.
  */
 export const GEAR_TIERS: GearTier[] = [
     gearTier(1, 1, ['Zardzewiały', 'Zardzewiała', 'Zardzewiałe'], {
-        weapon: ['club', 'dagger', 'sword'],
-        armor: ['padded', 'leather'],
-        talisman: ['ring', 'charm'],
+        weapon: ['club', 'dagger', 'sword', 'staff', 'mace'],
+        armor: ['padded', 'tunic', 'leather', 'cloak'],
+        talisman: ['ring', 'charm', 'pendant'],
     }),
     gearTier(2, 11, ['Żelazny', 'Żelazna', 'Żelazne'], {
-        weapon: ['sword', 'axe', 'spear'],
-        armor: ['leather', 'chain'],
-        talisman: ['ring', 'amulet'],
+        weapon: ['sword', 'axe', 'spear', 'club', 'saber'],
+        armor: ['leather', 'chain', 'brigandine', 'padded'],
+        talisman: ['ring', 'amulet', 'sigil'],
     }),
     gearTier(3, 21, ['Stalowy', 'Stalowa', 'Stalowe'], {
-        weapon: ['sword', 'axe', 'hammer'],
-        armor: ['chain', 'breastplate'],
-        talisman: ['amulet', 'rune'],
+        weapon: ['sword', 'axe', 'hammer', 'halberd', 'saber'],
+        armor: ['chain', 'breastplate', 'brigandine', 'scale'],
+        talisman: ['amulet', 'rune', 'charm'],
     }),
     gearTier(4, 31, ['Srebrny', 'Srebrna', 'Srebrne'], {
-        weapon: ['spear', 'mace', 'sword'],
-        armor: ['breastplate', 'robe'],
-        talisman: ['medallion', 'rune'],
+        weapon: ['spear', 'mace', 'sword', 'flail', 'warpick'],
+        armor: ['breastplate', 'robe', 'scale', 'bechter'],
+        talisman: ['medallion', 'rune', 'sigil'],
     }),
     gearTier(5, 41, ['Kryształowy', 'Kryształowa', 'Kryształowe'], {
-        weapon: ['sword', 'scythe', 'dagger'],
-        armor: ['cuirass', 'robe'],
-        talisman: ['gem', 'amulet'],
+        weapon: ['sword', 'scythe', 'dagger', 'trident', 'glaive'],
+        armor: ['cuirass', 'robe', 'chain', 'cloak'],
+        talisman: ['gem', 'amulet', 'orb'],
     }),
     gearTier(6, 51, ['Obsydianowy', 'Obsydianowa', 'Obsydianowe'], {
-        weapon: ['axe', 'glaive', 'hammer'],
-        armor: ['cuirass', 'cloak'],
-        talisman: ['gem', 'eye'],
+        weapon: ['axe', 'glaive', 'hammer', 'flail', 'greatsword'],
+        armor: ['cuirass', 'cloak', 'bechter', 'plate'],
+        talisman: ['gem', 'eye', 'fang'],
     }),
     gearTier(7, 61, ['Smoczy', 'Smocza', 'Smocze'], {
-        weapon: ['greatsword', 'scythe', 'spear'],
-        armor: ['plate', 'chain'],
-        talisman: ['heart', 'medallion'],
+        weapon: ['greatsword', 'scythe', 'spear', 'trident', 'halberd'],
+        armor: ['plate', 'chain', 'cuirass', 'scale'],
+        talisman: ['heart', 'medallion', 'fang'],
     }),
     gearTier(8, 71, ['Demoniczny', 'Demoniczna', 'Demoniczne'], {
-        weapon: ['greatsword', 'axe', 'mace'],
-        armor: ['plate', 'cuirass'],
-        talisman: ['eye', 'heart'],
+        weapon: ['greatsword', 'axe', 'mace', 'warpick', 'flail'],
+        armor: ['plate', 'cuirass', 'brigandine', 'bechter'],
+        talisman: ['eye', 'heart', 'orb'],
     }),
     gearTier(9, 81, ['Widmowy', 'Widmowa', 'Widmowe'], {
-        weapon: ['scythe', 'glaive', 'dagger'],
-        armor: ['robe', 'plate'],
-        talisman: ['rune', 'gem'],
+        weapon: ['scythe', 'glaive', 'dagger', 'saber', 'staff'],
+        armor: ['robe', 'plate', 'cloak', 'tunic'],
+        talisman: ['rune', 'gem', 'sigil'],
     }),
     gearTier(10, 91, ['Elizejski', 'Elizejska', 'Elizejskie'], {
-        weapon: ['greatsword', 'hammer', 'spear'],
-        armor: ['plate', 'cuirass'],
-        talisman: ['heart', 'amulet'],
+        weapon: ['greatsword', 'hammer', 'spear', 'trident', 'sword'],
+        armor: ['plate', 'cuirass', 'robe', 'scale'],
+        talisman: ['heart', 'amulet', 'orb'],
     }),
 ];
 
@@ -348,10 +434,10 @@ function inflect(forms: AdjectiveForms, gender: Gender): string {
     return forms[GENDER_INDEX[gender]];
 }
 
-function rarityPrefix(rarity: ItemRarityValue, gender: Gender): string {
+function rarityPrefix(rarity: ItemRarityValue, gender: Gender, rng: RandomSource): string {
     const forms = RARITY_PREFIXES[rarity];
 
-    return forms && forms.length > 0 ? `${inflect(pick(forms), gender)} ` : '';
+    return forms && forms.length > 0 ? `${inflect(rng.pick(forms), gender)} ` : '';
 }
 
 type BonusStatDefinition = {
@@ -392,8 +478,8 @@ const BONUS_STAT_POOL: Record<GearTypeValue, BonusStatDefinition[]> = {
 const TIER_PERCENT_GROWTH = 0.12;
 
 /** How far a rolled item may sit off the curve: ±15%, in 0.1% steps. */
-export function rollQuality(): number {
-    return 0.85 + randomInt(0, 300) / 1000;
+export function rollQuality(rng: RandomSource = LIVE_RANDOM): number {
+    return 0.85 + rng.int(0, 300) / 1000;
 }
 
 function bonusStatsFor(
@@ -401,6 +487,7 @@ function bonusStatsFor(
     base: GearBase,
     tier: GearTier,
     rarity: ItemRarityValue,
+    rng: RandomSource,
 ): Record<string, BonusStat> {
     const meta = RARITY_META[rarity];
     const count = Math.min(meta.bonusStats, BONUS_STAT_POOL[type].length);
@@ -415,14 +502,14 @@ function bonusStatsFor(
     const affinity = base.affinity
         .map((key) => pool.find((definition) => definition.key === key))
         .filter((definition): definition is BonusStatDefinition => definition !== undefined);
-    const rest = shuffled(pool.filter((definition) => !affinity.includes(definition)));
+    const rest = rng.shuffled(pool.filter((definition) => !affinity.includes(definition)));
     const scale = (1 + (tier.index - 1) * TIER_PERCENT_GROWTH) * meta.percentMultiplier;
 
     const bonusStats: Record<string, BonusStat> = {};
 
     for (const definition of [...affinity, ...rest].slice(0, count)) {
         bonusStats[definition.key] = {
-            value: Math.max(1, Math.round(randomInt(definition.min, definition.max) * scale)),
+            value: Math.max(1, Math.round(rng.int(definition.min, definition.max) * scale)),
             name: definition.name,
             suffix: definition.suffix,
         };
@@ -524,17 +611,19 @@ export type GearOptions = {
     /** Shops charge a markup on top of what the same item sells for. */
     priceFactor?: number;
     id?: string;
+    /** Seeded for shop stock, live for drops — see `RandomSource`. */
+    rng?: RandomSource;
 };
 
 export function createGearItem(options: GearOptions): Item {
-    const { type, level, rarity, quality = 1, prefixed = true, priceFactor = 1 } = options;
+    const { type, level, rarity, quality = 1, prefixed = true, priceFactor = 1, rng = LIVE_RANDOM } = options;
 
     const tier = gearTierFor(level);
-    const base = options.base ?? pick(tier[type]);
+    const base = options.base ?? rng.pick(tier[type]);
     const meta = RARITY_META[rarity];
     const scale = meta.statMultiplier * quality;
 
-    const bonusStats = bonusStatsFor(type, base, tier, rarity);
+    const bonusStats = bonusStatsFor(type, base, tier, rarity, rng);
     let stats: ItemStats = {};
 
     if (type === 'weapon') {
@@ -555,7 +644,7 @@ export function createGearItem(options: GearOptions): Item {
 
     stats = { ...stats, ...flattenBonusStats(bonusStats) };
 
-    const prefix = prefixed ? rarityPrefix(rarity, base.gender) : '';
+    const prefix = prefixed ? rarityPrefix(rarity, base.gender, rng) : '';
     const name = `${prefix}${inflect(tier.adjective, base.gender)} ${base.noun}`;
 
     return finalize({
@@ -592,13 +681,14 @@ export function createBagItem(options: {
     prefixed?: boolean;
     priceFactor?: number;
     id?: string;
+    rng?: RandomSource;
 }): Item {
-    const { level, rarity, maxSlots, prefixed = true, priceFactor = 1 } = options;
-    const base = options.base ?? pick(bagBasesFor(level));
+    const { level, rarity, maxSlots, prefixed = true, priceFactor = 1, rng = LIVE_RANDOM } = options;
+    const base = options.base ?? rng.pick(bagBasesFor(level));
     const meta = RARITY_META[rarity];
     const bagSlots = Math.min(maxSlots, Math.max(1, base.bagSlots + meta.bagSlotBonus));
     const stats: ItemStats = { bagSlots };
-    const prefix = prefixed ? rarityPrefix(rarity, base.gender) : '';
+    const prefix = prefixed ? rarityPrefix(rarity, base.gender, rng) : '';
 
     return finalize({
         id: options.id ?? randomId('drop_'),
@@ -623,9 +713,10 @@ export function createPotionItem(options: {
     value: number;
     base?: PotionBase;
     id?: string;
+    rng?: RandomSource;
 }): Item {
-    const { level, rarity, value } = options;
-    const base = options.base ?? pick(POTION_BASES);
+    const { level, rarity, value, rng = LIVE_RANDOM } = options;
+    const base = options.base ?? rng.pick(POTION_BASES);
 
     return finalize({
         id: options.id ?? randomId('drop_'),

@@ -3,11 +3,12 @@
  * the PA shop, and the snapshot the UI renders from.
  */
 
-import { MAPS, WORLD_MAP_POSITIONS, getMap, shopsFor, stagesForLocation } from './catalog';
+import { MAPS, WORLD_MAP_POSITIONS, getMap, stagesForLocation } from './catalog';
 import { STAGES_PER_LOCATION } from './config';
 import { GameError } from './errors';
 import { recalculate, recordActivity, regenerateActionPoints, toPlayerView } from './profile';
 import { completeExpiredRests, restStateFor } from './rest';
+import { SHOPS } from './shops';
 import type { GameLocation, GameMapData, GameProfile, GameSnapshot, PaOffer, WorldMapPin } from './types';
 
 /** PA shop prices before the level multiplier is applied. */
@@ -179,7 +180,7 @@ export function buildSnapshot(profile: GameProfile, now: number = Date.now()): G
         user: toPlayerView(profile),
         currentMap: withRuntimeMapData(profile, getMap(profile.currentMapId)),
         worldMaps: worldMaps(profile),
-        shops: shopsFor(profile.level),
+        shops: SHOPS,
         paOffers: paOffers(profile),
         rest: restStateFor(profile, now),
     };

@@ -236,6 +236,8 @@ export type WorldMapPin = {
 export type Shop = {
     id: string;
     name: string;
+    /** The town's ten levels — everything on the shelves is cut for these. */
+    levelRange: { min: number; max: number };
     items: Item[];
 };
 

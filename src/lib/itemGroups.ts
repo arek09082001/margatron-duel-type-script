@@ -21,10 +21,10 @@ export type ItemGroup<T> = {
 /**
  * Groups items by equipment slot and orders each group weakest to strongest.
  *
- * `power` is the sort key rather than the level requirement: the level-scaled
- * stock always requires the player's current level, so sorting by level would
- * park the weakest gear in the shop at the very bottom. Level breaks ties, and
- * the name keeps the order stable for otherwise identical items.
+ * Level leads the sort and power breaks ties: a shop's shelf now spans its
+ * town's ten levels, so what a player scans for is the highest row they are
+ * allowed to buy — and that puts everything still out of reach below it. The
+ * name keeps the order stable for otherwise identical items.
  *
  * Generic over the entry so the sell tab can carry its inventory slot index
  * along and still address the right slot after sorting.
@@ -58,8 +58,8 @@ export function groupItemsByType<T>(entries: T[], getItem: (entry: T) => Item): 
             const b = getItem(right);
 
             return (
-                (a.power ?? 0) - (b.power ?? 0) ||
                 (a.level ?? 1) - (b.level ?? 1) ||
+                (a.power ?? 0) - (b.power ?? 0) ||
                 a.name.localeCompare(b.name)
             );
         });
