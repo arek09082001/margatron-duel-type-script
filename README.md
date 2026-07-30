@@ -123,24 +123,48 @@ expowiska po pięć etapów, arenę, mocnych przeciwników, karczmę i sklep.
 
 | # | Kraina | Poziomy | Wymagany poziom | Sklep |
 | --- | --- | --- | --- | --- |
-| 1 | Ithan | 1-10 | 1 | `blacksmith_1` |
-| 2 | Torneg | 11-20 | 9 | `blacksmith_2` |
-| 3 | Karka-han | 21-30 | 20 | `blacksmith_2` |
-| 4 | Werbin | 31-40 | 30 | `blacksmith_3` |
-| 5 | Eaquia | 41-50 | 40 | `blacksmith_4` |
-| 6 | Nithal | 51-60 | 50 | `blacksmith_4` |
-| 7 | Tuzmer | 61-70 | 60 | `blacksmith_5` |
-| 8 | Thuzal | 71-80 | 70 | `blacksmith_5` |
-| 9 | Hilaia | 81-90 | 80 | `blacksmith_6` |
-| 10 | Elizja | 91-100 | 90 | `blacksmith_6` |
+| 1 | Olszawa | 1-10 | 1 | `blacksmith_1` |
+| 2 | Rudzin | 11-20 | 9 | `blacksmith_2` |
+| 3 | Wielgrad | 21-30 | 20 | `blacksmith_2` |
+| 4 | Czarnobór | 31-40 | 30 | `blacksmith_3` |
+| 5 | Sołwar | 41-50 | 40 | `blacksmith_4` |
+| 6 | Nihrast | 51-60 | 50 | `blacksmith_4` |
+| 7 | Zhurmat | 61-70 | 60 | `blacksmith_5` |
+| 8 | Grzmiel | 71-80 | 70 | `blacksmith_5` |
+| 9 | Ismeria | 81-90 | 80 | `blacksmith_6` |
+| 10 | Zoryan | 91-100 | 90 | `blacksmith_6` |
 
 Statystyki przeciwników w krainach 5-10 nie są zgadywane. `scaledEnemy` mnoży
 każdą wartość bazową przez `1 + (poziom - 1) * 0,15`, więc kraina dziesięć
 poziomów dalej bije mocniej nawet przy tych samych bazach — dlatego rosną one
-łagodniej niż podwojenie na krainę z Ithan → Werbin. Cel, mierzony na graczu
-w sprzęcie ze sklepu danej krainy i na jej ostatnim poziomie: najsilniejszy
-przeciwnik ginie w około sześciu rundach i potrzebuje około sześciu ciosów, by
-zabić gracza. To krzywa Karka-hanu, najzdrowsza z pierwszych czterech krain.
+łagodniej niż podwojenie na krainę z Olszawy → Czarnoboru. Cel, mierzony na
+graczu w sprzęcie ze sklepu danej krainy i na jej ostatnim poziomie:
+najsilniejszy przeciwnik ginie w około sześciu rundach i potrzebuje około
+sześciu ciosów, by zabić gracza. To krzywa Wielgradu, najzdrowsza z pierwszych
+czterech krain.
+
+### Mapy miast
+
+Wszystkie dziesięć map (`public/game-assets/maps`) i wszystkie sylwetki NPC
+(`public/game-assets/npcs`) są generowane z jednego opisu w
+[`tools/town-art`](tools/town-art) — nie ma tam żadnej cudzej grafiki:
+
+```bash
+python3 tools/town-art/build.py          # rysuje mapy i NPC-ów, zapisuje layout.json
+python3 tools/town-art/build.py --check   # sama walidacja układu
+python3 tools/town-art/emit_catalog.py    # przepisuje współrzędne do catalog.ts
+```
+
+Miasto jest opisane w kafelkach w `towns.py`. Z tego samego opisu powstaje
+obrazek **i** prostokąty klikalne w [`catalog.ts`](src/game/catalog.ts), więc
+kuźnia nie może się rozjechać z ramką, w którą się klika. Plansza ma 25 × 16
+kafelków po 32 px — dokładnie tyle, ile mierzy `#map-area`. Po zmianie układu
+uruchom `build.py`, potem `emit_catalog.py`.
+
+Zmiana nazw krain zmieniła też identyfikatory lokacji, a `stageProgress` jest
+po nich kluczowane. `RENAMED_EXPEDITIONS` w [`state.ts`](src/game/state.ts)
+tłumaczy stary klucz na nowy przy odczycie, więc postacie zachowują odblokowane
+etapy expowisk.
 
 ## Łup
 

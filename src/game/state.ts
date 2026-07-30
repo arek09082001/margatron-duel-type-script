@@ -23,8 +23,44 @@ export function stageProgressKey(mapId: number, locationId: string): string {
     return `${mapId}_${locationId}`;
 }
 
+/**
+ * New expedition key -> the key it had before the lands were renamed.
+ *
+ * Renaming Ithan to Olszawa also renamed every location id inside it, and
+ * `stageProgress` is keyed by those ids — without this a character who had
+ * cleared five stages would find them locked again. Reads fall back to the old
+ * key; the next win writes the new one, so the fallback quietly stops
+ * mattering per save.
+ */
+const RENAMED_EXPEDITIONS: Record<string, string> = {
+    '1_olszawa-badger-cave': '1_ithan-hunters-cave',
+    '1_olszawa-damp-ravine': '1_ithan-yss',
+    '2_rudzin-quarry': '2_torneg-mountain-cave',
+    '2_rudzin-catacombs': '2_torneg-spider-nest',
+    '3_wielgrad-flooded-docks': '3_karka-virgin-forest',
+    '3_wielgrad-canals': '3_karka-zulu-settlement',
+    '4_czarnobor-tar-forest': '4_werbin-heaths',
+    '4_czarnobor-barrows': '4_werbin-goblin-forest',
+    '4_czarnobor-wolf-grove': '4_werbin-tristam',
+    '5_solwar-salt-pans': '5_eaquia-wrecks',
+    '5_solwar-castaway-bay': '5_eaquia-undercity',
+    '6_nihrast-basalt-stairs': '6_nithal-cliff',
+    '6_nihrast-ash-crypt': '6_nithal-temple',
+    '7_zhurmat-dunes': '7_tuzmer-port',
+    '7_zhurmat-necropolis': '7_tuzmer-catacombs',
+    '8_grzmiel-thunder-ridge': '8_thuzal-highlands',
+    '8_grzmiel-mine-shafts': '8_thuzal-fortress',
+    '9_ismeria-ice-rifts': '9_hilaia-burnt-fields',
+    '9_ismeria-frozen-haven': '9_hilaia-sanctuary',
+    '10_zoryan-marble-gate': '10_elizja-gate',
+    '10_zoryan-dawn-throne': '10_elizja-throne',
+};
+
 export function unlockedStage(profile: GameProfile, mapId: number, locationId: string): number {
-    return profile.stageProgress[stageProgressKey(mapId, locationId)] ?? 1;
+    const key = stageProgressKey(mapId, locationId);
+    const legacyKey = RENAMED_EXPEDITIONS[key];
+
+    return profile.stageProgress[key] ?? (legacyKey ? profile.stageProgress[legacyKey] : undefined) ?? 1;
 }
 
 export function unlockNextStage(

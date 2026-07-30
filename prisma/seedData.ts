@@ -58,12 +58,12 @@ export const SEED_PLAYERS: SeedPlayer[] = [
             restTasks: {},
             currentMapId: 3,
             stageProgress: {
-                '1_ithan-hunters-cave': 6,
-                '1_ithan-yss': 6,
-                '2_torneg-mountain-cave': 6,
-                '2_torneg-spider-nest': 6,
-                '3_karka-virgin-forest': 6,
-                '3_karka-zulu-settlement': 6,
+                '1_olszawa-badger-cave': 6,
+                '1_olszawa-damp-ravine': 6,
+                '2_rudzin-quarry': 6,
+                '2_rudzin-catacombs': 6,
+                '3_wielgrad-flooded-docks': 6,
+                '3_wielgrad-canals': 6,
             },
             inventory: [
                 {

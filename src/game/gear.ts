@@ -211,7 +211,7 @@ function gearTier(
 
 /**
  * One tier per land, and the shapes rotate as you climb so the backpack keeps
- * looking different — Ithan hands out clubs and rusty daggers, Elizja hands out
+ * looking different — Olszawa hands out clubs and rusty daggers, Zoryan hands out
  * greatswords and hearts.
  */
 export const GEAR_TIERS: GearTier[] = [
